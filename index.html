@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>모바일 청첩장</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 1페이지 -->
+<div class="section" id="page1">
+  <div id="page1-scene">
+    <img src="background.gif" id="page1-bg">
+    <img src="character.gif" id="page1-char">
+  </div>
+
+  <!-- 하단 이름 문구 -->
+  <div id="page1-names">
+    <div class="name-block">
+      <span class="name-parents" id="name-parent-left">김옥현의 차남</span>
+      <span class="name-main" id="name-main-left">이현승</span>
+    </div>
+    <img src="heart.png" id="page1-heart">
+    <div class="name-block">
+      <span class="name-parents" id="name-parent-right">이아빠, 유선희의 장녀</span>
+      <span class="name-main" id="name-main-right">이수현</span>
+    </div>
+  </div>
+
+  <button class="button" onclick="goToPage(1)">↓</button>
+</div>
+
+<!-- 2페이지 -->
+<div class="section" id="page2">
+  <!-- 페이지 제목 -->
+  <div id="page2-header">
+    <div id="page2-title">우리가 걸어온 길</div>
+    <div id="page2-divider"></div>
+    <div id="page2-sub">OUR STORY</div>
+  </div>
+
+  <div class="timeline">
+    <div class="line"></div>
+    <div class="start-dot"></div>
+    <img src="topview.gif" id="topview">
+
+    <!-- 홀수: 사진 왼쪽, 텍스트 오른쪽 -->
+    <div class="tl-entry left" id="e1">
+      <div class="tl-dot"></div>
+      <div class="tl-photo" id="p1"><img src="photo1.jpg"></div>
+      <div class="tl-text">
+        <div class="tl-date" id="td1"></div>
+        <div class="tl-title" id="tt1"></div>
+      </div>
+    </div>
+
+    <!-- 짝수: 텍스트 왼쪽, 사진 오른쪽 -->
+    <div class="tl-entry right" id="e2">
+      <div class="tl-dot"></div>
+      <div class="tl-text">
+        <div class="tl-date" id="td2"></div>
+        <div class="tl-title" id="tt2"></div>
+      </div>
+      <div class="tl-photo" id="p2"><img src="photo2.jpg"></div>
+    </div>
+
+    <div class="tl-entry left" id="e3">
+      <div class="tl-dot"></div>
+      <div class="tl-photo" id="p3"><img src="photo3.jpg"></div>
+      <div class="tl-text">
+        <div class="tl-date" id="td3"></div>
+        <div class="tl-title" id="tt3"></div>
+      </div>
+    </div>
+
+    <div class="tl-entry right" id="e4">
+      <div class="tl-dot"></div>
+      <div class="tl-text">
+        <div class="tl-date" id="td4"></div>
+        <div class="tl-title" id="tt4"></div>
+      </div>
+      <div class="tl-photo" id="p4"><img src="photo4.jpg"></div>
+    </div>
+
+    <div class="tl-entry left" id="e5">
+      <div class="tl-dot"></div>
+      <div class="tl-photo" id="p5"><img src="photo5.jpg"></div>
+      <div class="tl-text">
+        <div class="tl-date" id="td5"></div>
+        <div class="tl-title" id="tt5"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="button btn-down" onclick="goToPage(2)">↓</button>
+</div>
+
+<!-- 3페이지 -->
+<div class="section" id="page3">
+  <div class="title">📅 일시 & 장소</div>
+  <div class="subtitle">
+    2026년 9월 05일<br>
+    오후 2시<br><br>
+    서울 ○○웨딩홀
+  </div>
+  <button class="button" onclick="goToPage(0)">↑</button>
+</div>
+
+<!-- 배경음악 -->
+<audio id="bgm" src="song.mp3" loop></audio>
+<!-- 효과음 -->
+<audio id="sfx-heart" src="heart.mp3" preload="auto"></audio>
+<audio id="sfx-down" src="down.mp3" preload="auto"></audio>
+<audio id="sfx-drop" src="drop.mp3" preload="auto"></audio>
+<audio id="sfx-background" src="background.wav" preload="auto"></audio>
+<audio id="sfx-walk" src="walk.mp3" preload="auto"></audio>
+
+<!-- 스플래시 화면 -->
+<div id="splash">
+  <div id="splash-inner">
+    <div id="splash-sub">우리의 특별한 날에</div>
+    <div id="splash-title">Wedding<br>Invitation</div>
+    <div id="splash-date">2026 · 09 · 05</div>
+    <button id="splash-btn" onclick="startExperience()">
+      ♪ &nbsp;청첩장 열기
+    </button>
+  </div>
+</div>
+
+<!-- 상세보기 -->
+<div id="detail" style="display:none;">
+  <div class="detail-top"><img id="detail-img"></div>
+  <div class="detail-bottom">
+    <div class="detail-content">
+      <p id="detail-date"></p>
+      <h2 id="detail-title"></h2>
+      <p id="detail-desc"></p>
+    </div>
+    <button class="close-btn" onclick="closeDetail()">✕ 닫기</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
