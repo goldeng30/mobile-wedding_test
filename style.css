@@ -84,6 +84,12 @@ body {
   color: var(--rose);
 }
 
+@keyframes btn-breathe {
+  0%   { box-shadow: 0 0 0 0 rgba(201,132,138,0.5), 0 0 0 0 rgba(201,132,138,0.25); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 8px rgba(201,132,138,0.15), 0 0 0 16px rgba(201,132,138,0.07); transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(201,132,138,0.5), 0 0 0 0 rgba(201,132,138,0.25); transform: scale(1); }
+}
+
 #splash-btn {
   margin-top: 28px;
   padding: 14px 36px;
@@ -97,6 +103,7 @@ body {
   cursor: pointer;
   transition: background 0.25s, color 0.25s, transform 0.15s;
   -webkit-tap-highlight-color: transparent;
+  animation: btn-breathe 2s ease-in-out 1s infinite;
 }
 
 #splash-btn:hover,
@@ -666,6 +673,19 @@ body {
   letter-spacing: 0.18em;
   color: var(--text);
   line-height: 1.1;
+}
+
+/* ── 2페이지 bird.gif ── */
+
+#p2-bird {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
 }
 
 /* ── 2페이지 넘어가기 힌트 ── */

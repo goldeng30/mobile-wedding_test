@@ -160,7 +160,7 @@ function startExperience() {
 
   // 모든 효과음을 버튼 클릭 직후(사용자 인터랙션 컨텍스트) 미리 unlock
   // → 이후 setTimeout 안에서도 재생 가능해짐
-  ["sfx-heart","sfx-down","sfx-drop","sfx-background","sfx-walk","sfx-typing","sfx-button"].forEach(id => {
+  ["sfx-heart","sfx-down","sfx-drop","sfx-background","sfx-walk","sfx-typing","sfx-button","sfx-bird"].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.volume = 1;
@@ -310,6 +310,15 @@ function startGreetingAnimation() {
         function typeNext() {
           if (i >= greetingFull.length) {
             if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
+            // bird.gif 실행 (한 번만 재생 후 숨김)
+            const bird = document.getElementById("p2-bird");
+            if (bird) {
+              bird.src = "bird.gif?" + Date.now(); // GIF 처음부터 재생
+              bird.style.display = "block";
+              const sfxBird = document.getElementById("sfx-bird");
+              if (sfxBird) { sfxBird.currentTime = 0; sfxBird.play().catch(() => {}); }
+              setTimeout(() => { bird.style.display = "none"; }, 1800);
+            }
             const hint2 = document.getElementById("page2-scroll-hint");
             if (hint2) hint2.classList.add("visible");
             return;
