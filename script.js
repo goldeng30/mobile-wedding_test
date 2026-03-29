@@ -267,7 +267,21 @@ function transitionPage1To2() {
   ].join("; ");
 
   const hint = document.getElementById("page1-scroll-hint");
-  if (hint) { hint.classList.remove("visible"); hint.style.opacity = "0"; }
+  if (hint) { hint.classList.remove("visible"); }
+
+  // 점프 효과: 커졌다가 작아지며 화면을 건너뛰는 느낌
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 도약: 천천히 커지며 위로
+      char.style.transition = "transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+      char.style.transform  = "scale(1.7) translateY(-20px)";
+      setTimeout(() => {
+        // 착지: 줄어들며 내려옴
+        char.style.transition = "transform 0.55s cubic-bezier(0.45, 0, 0.55, 1)";
+        char.style.transform  = "scale(1) translateY(0)";
+      }, 700);
+    });
+  });
 
   const sfxDown = document.getElementById("sfx-down");
   if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
@@ -310,15 +324,17 @@ function startGreetingAnimation() {
         function typeNext() {
           if (i >= greetingFull.length) {
             if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
-            // bird.gif 실행 (한 번만 재생 후 숨김)
-            const bird = document.getElementById("p2-bird");
-            if (bird) {
-              bird.src = "bird.gif?" + Date.now(); // GIF 처음부터 재생
-              bird.style.display = "block";
-              const sfxBird = document.getElementById("sfx-bird");
-              if (sfxBird) { sfxBird.currentTime = 0; sfxBird.play().catch(() => {}); }
-              setTimeout(() => { bird.style.display = "none"; }, 1800);
-            }
+            // bird.gif 실행 (0.5초 딜레이 후 한 번만 재생)
+            setTimeout(() => {
+              const bird = document.getElementById("p2-bird");
+              if (bird) {
+                bird.src = "bird.gif?" + Date.now();
+                bird.style.display = "block";
+                const sfxBird = document.getElementById("sfx-bird");
+                if (sfxBird) { sfxBird.currentTime = 0; sfxBird.play().catch(() => {}); }
+                setTimeout(() => { bird.style.display = "none"; }, 1800);
+              }
+            }, 500);
             const hint2 = document.getElementById("page2-scroll-hint");
             if (hint2) hint2.classList.add("visible");
             return;
@@ -359,7 +375,7 @@ function transitionPage2To1() {
   const bubble = document.getElementById("greeting-bubble");
   const char   = document.getElementById("page1-char");
   const hint2  = document.getElementById("page2-scroll-hint");
-  if (hint2) { hint2.classList.remove("visible"); hint2.style.opacity = "0"; }
+  if (hint2) { hint2.classList.remove("visible"); }
   bubble.style.transition = "opacity 0.3s ease";
   bubble.style.opacity    = "0";
   char.style.transition   = "opacity 0.3s ease";
@@ -377,9 +393,8 @@ function transitionPage2To3() {
   const bubble = document.getElementById("greeting-bubble");
   const char   = document.getElementById("page1-char");
   const hint2  = document.getElementById("page2-scroll-hint");
-  if (hint2) { hint2.classList.remove("visible"); hint2.style.opacity = "0"; }
+  if (hint2) { hint2.classList.remove("visible"); }
 
-  // 캐릭터 현재 위치 fixed로 고정 (슬라이드 내내 화면에 머무름)
   const rect = char.getBoundingClientRect();
   char.style.cssText = [
     "position: fixed",
@@ -397,10 +412,12 @@ function transitionPage2To3() {
   ].join("; ");
 
   setTimeout(() => {
+    char.style.transition = "opacity 0.4s ease";
+    char.style.opacity = "0";
     const sfxDown = document.getElementById("sfx-down");
     if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
-    slideToPage(2, () => { startTimelineWithFixedChar(); });
-  }, 500);
+    slideToPage(2, () => { initAlbumPuzzle(); });
+  }, 300);
 }
 
 /* ──────────────────────────────────────────
@@ -408,16 +425,9 @@ function transitionPage2To3() {
 ────────────────────────────────────────── */
 
 function transitionPage3To2() {
-  if (interval) { clearTimeout(interval); interval = null; }
-  stopHint();
-  const topview = document.getElementById("topview");
-  const char    = document.getElementById("page1-char");
-  const header  = document.getElementById("page2-header");
-  if (header) header.classList.remove("visible");
-  [topview, char].forEach(el => { el.style.transition = "opacity 0.3s ease"; el.style.opacity = "0"; });
-  setTimeout(() => {
-    slideToPage(1, () => { startGreetingAnimation(); });
-  }, 300);
+  const sfxDown = document.getElementById("sfx-down");
+  if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
+  slideToPage(1, () => { startGreetingAnimation(); });
 }
 
 /* ──────────────────────────────────────────
@@ -425,20 +435,9 @@ function transitionPage3To2() {
 ────────────────────────────────────────── */
 
 function transitionPage3To4() {
-  if (interval) { clearTimeout(interval); interval = null; }
-  stopHint();
-  const char    = document.getElementById("page1-char");
-  const topview = document.getElementById("topview");
-  char.style.transition = "opacity 0.4s ease";
-  char.style.opacity    = "0";
-  const sfxWalk = document.getElementById("sfx-walk");
-  if (sfxWalk) { sfxWalk.currentTime = 0; sfxWalk.play().catch(() => {}); }
-  const currentTop = parseFloat(topview.style.top) || 0;
-  const exitTop    = currentTop + window.innerHeight * 0.25;
-  topview.style.transition = "top 1.8s cubic-bezier(0.4, 0, 0.6, 1), opacity 1.5s ease";
-  topview.style.top        = exitTop + "px";
-  topview.style.opacity    = "0";
-  setTimeout(() => { slideToPage(3, null); }, 650);
+  const sfxDown = document.getElementById("sfx-down");
+  if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
+  slideToPage(3, null);
 }
 
 /* ──────────────────────────────────────────
@@ -485,243 +484,190 @@ function slideToPage(targetIndex, callback) {
 
 
 /* ──────────────────────────────────────────
-   타임라인 (fixed 캐릭터 top 이동 + 지그재그)
+   앨범 퍼즐
 ────────────────────────────────────────── */
 
-const pointsVh = [24, 35, 46, 57, 68];
-const photos   = ["photo1.jpg","photo2.jpg","photo3.jpg","photo4.jpg","photo5.jpg"];
-const texts    = [
-  { date:"2025.03.24", title:"우리가 만난 지 100일 🎉", desc:"강릉으로 첫 여행을 떠났던 날, 바다 앞에서 100일을 기념했어요. 그 바람과 웃음이 아직도 생생해요." },
-  { date:"2025.05.11", title:"함께한 첫 번째 봄 🌸",   desc:"벚꽃이 흐드러지게 핀 공원을 함께 걸었어요. 꽃비가 내리던 그날, 손을 잡고 걷던 기억이 떠올라요." },
-  { date:"2025.07.28", title:"여름 바다에서 🌊",        desc:"뜨거운 여름, 제주도로 떠난 둘만의 여행. 투명한 바닷속처럼 서로를 더 깊이 알아간 시간이었어요." },
-  { date:"2025.10.14", title:"단풍길 드라이브 🍂",      desc:"빨갛게 물든 산길을 드라이브하며 처음으로 '앞으로도 늘 함께하자'고 말했던 날이에요." },
-  { date:"2025.12.24", title:"프러포즈 그날 밤 💍",     desc:"눈이 내리던 크리스마스 이브, 반짝이는 도시 야경 앞에서 평생을 함께하자고 약속했어요." }
+const albumTexts = [
+  { date:"2025.03.24", title:"우리가 만난 지 100일 🎉", desc:"강릉으로 첫 여행을 떠났던 날, 바다 앞에서 100일을 기념했어요." },
+  { date:"2025.05.11", title:"함께한 첫 번째 봄 🌸",   desc:"벚꽃이 흐드러지게 핀 공원을 함께 걸었어요." },
+  { date:"2025.07.28", title:"여름 바다에서 🌊",        desc:"뜨거운 여름, 제주도로 떠난 둘만의 여행이에요." },
+  { date:"2025.10.14", title:"단풍길 드라이브 🍂",      desc:"빨갛게 물든 산길을 드라이브하며 함께하자고 말했던 날이에요." },
+  { date:"2025.12.24", title:"프러포즈 그날 밤 💍",     desc:"눈이 내리던 크리스마스 이브, 평생을 함께하자고 약속했어요." },
+  { date:"2026.09.05", title:"드디어 결혼해요! 💕",     desc:"두 사람이 함께한 시간들이 쌓여 이 날까지 왔어요." }
+];
+const albumPhotos = ["photo1.jpg","photo2.jpg","photo3.jpg","photo4.jpg","photo5.jpg","photo6.jpg"];
+const albumMsgs   = [
+  "힌트를 읽고 맞는 칸에 넣어봐요!",
+  "잘했어요! 계속해봐요 👍",
+  "두 개 맞췄어요! 🎉",
+  "절반 왔어요! 화이팅 💪",
+  "조금만 더요! ✨",
+  "한 장만 남았어요! 🌸",
+  "앨범 완성! 우리의 모든 기억이 모였어요 💕"
 ];
 
-let current  = 0;
-let interval = null;
+let albumDragId   = null;
+let albumCorrect  = 0;
+let albumTouchCard = null;
+let albumTouchClone = null;
 
-function initPage2Layout() {
-  const vh = window.innerHeight;
-  const startRatio = 0.17;
-  const entryH     = 0.11;
-  const lineEndR   = 0.79;
+function initAlbumPuzzle() {
+  albumCorrect = 0;
+  albumDragId  = null;
+  document.getElementById("album-progress-fill").style.width = "0%";
+  document.getElementById("album-speech-bubble").textContent = albumMsgs[0];
 
-  const line = document.querySelector(".line");
-  if (line) {
-    line.style.top    = (startRatio * vh) + "px";
-    line.style.height = ((lineEndR - startRatio) * vh) + "px";
+  // 슬롯 초기화
+  for (let i = 0; i < 6; i++) {
+    const slot = document.getElementById("slot-" + i);
+    if (!slot) continue;
+    slot.classList.remove("correct", "wrong");
+    slot.querySelector(".slot-num").style.display = "";
+    slot.querySelector(".slot-hint").style.display = "";
+    slot.querySelector(".slot-icon").style.display = "none";
+    const fi = slot.querySelector(".slot-filled-img");
+    if (fi) { fi.style.display = "none"; }
+    const ck = slot.querySelector(".slot-check");
+    if (ck) ck.style.display = "none";
   }
+  // 사진카드 초기화
+  for (let i = 0; i < 6; i++) {
+    const ids = [3, 0, 5, 1, 4, 2];
+    const card = document.getElementById("apc-" + ids[i]);
+    if (card) { card.classList.remove("placed", "dragging"); }
+  }
+}
 
-  const startDot = document.querySelector(".start-dot");
-  if (startDot) startDot.style.top = (startRatio * vh) + "px";
+function albumSetMsg(text) {
+  const b = document.getElementById("album-speech-bubble");
+  if (b) b.textContent = text;
+}
 
-  pointsVh.forEach((ratio, i) => {
-    const entry = document.getElementById("e" + (i + 1));
-    if (entry) {
-      entry.style.top    = (ratio / 100 * vh) + "px";
-      entry.style.height = (entryH * vh) + "px";
-    }
+function albumDragStart(e) {
+  albumDragId = e.currentTarget.dataset.id;
+  e.currentTarget.classList.add("dragging");
+}
+function albumDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add("drag-over");
+}
+function albumDragLeave(e) {
+  e.currentTarget.classList.remove("drag-over");
+}
+function albumDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove("drag-over");
+  if (!albumDragId) return;
+  albumCheckDrop(e.currentTarget, albumDragId);
+  document.getElementById("apc-" + albumDragId)?.classList.remove("dragging");
+  albumDragId = null;
+}
+
+function albumTouchStart(e) {
+  albumTouchCard = e.currentTarget;
+  albumDragId = albumTouchCard.dataset.id;
+  const r = albumTouchCard.getBoundingClientRect();
+  albumTouchClone = albumTouchCard.cloneNode(true);
+  albumTouchClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;`;
+  document.body.appendChild(albumTouchClone);
+  albumTouchCard.classList.add("dragging");
+}
+function albumTouchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  if (albumTouchClone) {
+    albumTouchClone.style.left = (t.clientX - 34) + "px";
+    albumTouchClone.style.top  = (t.clientY - 34) + "px";
+  }
+  document.querySelectorAll(".slot").forEach(s => {
+    const r = s.getBoundingClientRect();
+    (t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom)
+      ? s.classList.add("drag-over") : s.classList.remove("drag-over");
   });
 }
+function albumTouchEnd(e) {
+  if (albumTouchClone) { albumTouchClone.remove(); albumTouchClone = null; }
+  albumTouchCard?.classList.remove("dragging");
+  const t = e.changedTouches[0];
+  document.querySelectorAll(".slot").forEach(s => {
+    const r = s.getBoundingClientRect();
+    if (t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
+      s.classList.remove("drag-over");
+      if (albumDragId) albumCheckDrop(s, albumDragId);
+    }
+  });
+  albumDragId = null; albumTouchCard = null;
+}
 
-function startTimelineWithFixedChar() {
-  if (interval) clearTimeout(interval);
-  current = 0;
+function albumCheckDrop(slot, pid) {
+  if (slot.classList.contains("correct")) return;
+  const answer = parseInt(slot.dataset.answer);
+  const pidInt = parseInt(pid);
 
-  // 레이아웃 px 초기화
-  initPage2Layout();
+  if (answer === pidInt) {
+    slot.classList.add("correct");
+    slot.querySelector(".slot-num").style.display = "none";
+    slot.querySelector(".slot-hint").style.display = "none";
+    // 사진 이미지로 채우기
+    const icon = slot.querySelector(".slot-icon");
+    const img = document.createElement("img");
+    img.src = albumPhotos[pidInt];
+    img.className = "slot-filled-img";
+    img.style.cssText = "width:100%;height:60px;object-fit:cover;border-radius:7px;display:block;margin-bottom:3px;";
+    icon.replaceWith(img);
+    // 날짜
+    const dateEl = document.createElement("div");
+    dateEl.style.cssText = "font-size:8px;color:#c9848a;font-family:'Noto Sans KR',sans-serif;";
+    dateEl.textContent = albumTexts[pidInt].date;
+    slot.appendChild(dateEl);
 
-  // 라인·스타트도트 숨김 상태 확인
-  const line     = document.querySelector(".line");
-  const startDot = document.querySelector(".start-dot");
-  if (line)     { line.style.transition = "none"; line.style.opacity = "0"; }
-  if (startDot) { startDot.style.transition = "none"; startDot.style.opacity = "0"; }
+    const ck = slot.querySelector(".slot-check");
+    if (ck) ck.style.display = "flex";
 
-  for (let i = 1; i <= 5; i++) {
-    const photo = document.getElementById("p" + i);
-    const text  = document.querySelector("#e" + i + " .tl-text");
-    if (photo) { photo.style.display = "none"; photo.classList.remove("visible"); }
-    if (text)  { text.classList.remove("visible"); }
+    document.getElementById("apc-" + pid)?.classList.add("placed");
+
+    // 하트 효과음
+    const sfx = document.getElementById("sfx-heart");
+    if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
+
+    albumCorrect++;
+    document.getElementById("album-progress-fill").style.width = (albumCorrect / 6 * 100) + "%";
+    albumSetMsg(albumMsgs[albumCorrect]);
+
+    if (albumCorrect === 6) {
+      setTimeout(() => goToPage(3), 1500);
+    }
+  } else {
+    slot.classList.add("wrong");
+    setTimeout(() => slot.classList.remove("wrong"), 400);
+    albumSetMsg("다시 생각해봐요 🤔");
+    setTimeout(() => albumSetMsg(albumMsgs[albumCorrect]), 1200);
   }
-
-  const char    = document.getElementById("page1-char");
-  const topview = document.getElementById("topview");
-  const vh      = window.innerHeight;
-  const startTop = 0.17 * vh;
-  const entryH   = 0.11 * vh;
-
-  // topview 초기 위치 세팅 (투명)
-  topview.style.transition = "none";
-  topview.style.top        = startTop + "px";
-  topview.style.opacity    = "0";
-
-  // 헤더 초기화 (숨김)
-  const header = document.getElementById("page2-header");
-  if (header) { header.classList.remove("visible"); }
-
-  // 1단계: 헤더 낙하 등장
-  setTimeout(() => {
-    if (header) { header.classList.add("visible"); }
-
-    // 2단계: 헤더 등장 후 캐릭터 페이드아웃
-    setTimeout(() => {
-      char.style.transition = "opacity 0.5s ease";
-      char.style.opacity    = "0";
-
-      // 3단계: topview 페이드인
-      setTimeout(() => {
-        topview.style.transition = "top 1.2s cubic-bezier(0.45, 0, 0.55, 1), opacity 0.6s ease";
-        topview.style.opacity    = "1";
-
-        // 4단계: 길 페이드인
-        setTimeout(() => {
-          if (line)     { line.style.transition = "opacity 0.8s ease"; line.style.opacity = "1"; }
-          if (startDot) { startDot.style.transition = "opacity 0.8s ease"; startDot.style.opacity = "1"; }
-          document.querySelectorAll(".tl-dot").forEach(el => {
-            el.style.transition = "opacity 0.8s ease";
-            el.style.opacity    = "1";
-          });
-
-        // 5단계: 순차적으로 각 포인트 이동
-          const moveToNext = () => {
-            if (current >= pointsVh.length) return;
-            const idx = current;
-            current++;
-
-            // topview 이동
-            const entryTop = (pointsVh[idx] / 100) * vh;
-            topview.style.top = (entryTop + entryH / 2) + "px";
-
-            // 도착 후(1.2s) 사진/텍스트 페이드인 + 하트 효과
-            const moveTime = 1200;
-            setTimeout(() => {
-              const dateEl  = document.getElementById("td" + (idx + 1));
-              const titleEl = document.getElementById("tt" + (idx + 1));
-              if (dateEl)  dateEl.textContent  = texts[idx].date;
-              if (titleEl) titleEl.textContent = texts[idx].title;
-
-              const photo = document.getElementById("p" + (idx + 1));
-              const text  = document.querySelector("#e" + (idx + 1) + " .tl-text");
-              if (photo) {
-                photo.style.display = "block";
-                setTimeout(() => {
-                  photo.classList.add("visible");
-                  if (text) text.classList.add("visible");
-                }, 30);
-                photo.onclick = () => openDetail(idx);
-              }
-
-              // 하트 띄우기
-              floatHeart();
-
-              // 페이드인 완료(2s) + 0.1초 대기 후 다음 포인트
-              setTimeout(() => {
-                if (idx === pointsVh.length - 1) {
-                  // 마지막 포인트 → 첫 사진 힌트
-                  setTimeout(() => hintPhoto(0), 500);
-                } else {
-                  interval = setTimeout(moveToNext, 0);
-                }
-              }, 2000 + 100);
-            }, moveTime);
-          };
-
-          interval = setTimeout(moveToNext, 1000); // 스타팅 → 첫 포인트 1초 딜레이
-        }, 700); // 길 페이드인(0.8s) 완료 후
-      }, 600); // 캐릭터 아웃(0.5s) 완료 후
-    }, 500); // 헤더 낙하(0.5s) 완료 후
-  }, 100); // 슬라이드 완료 직후
 }
 
 /* ──────────────────────────────────────────
-   하트 플로팅
-────────────────────────────────────────── */
-
-function floatHeart() {
-  const topview = document.getElementById("topview");
-  const heart   = document.getElementById("tl-heart");
-  if (!topview || !heart) return;
-
-  const rect = topview.getBoundingClientRect();
-  // topview 우측 상단에 배치
-  heart.style.left = (rect.right - 28) + "px";
-  heart.style.top  = (rect.top - 8) + "px";
-
-  // 효과음
-  const sfx = document.getElementById("sfx-heart");
-  if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
-
-  // 애니메이션 재시작
-  heart.classList.remove("floating");
-  void heart.offsetWidth; // reflow
-  heart.classList.add("floating");
-}
-
-/* ──────────────────────────────────────────
-   사진 힌트 (반복 흔들림)
-────────────────────────────────────────── */
-
-let hintTimer = null;
-let hintIdx   = -1;
-
-function hintPhoto(idx) {
-  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
-  hintIdx = idx;
-
-  const photo = document.getElementById("p" + (idx + 1));
-  if (!photo) return;
-
-  function shake() {
-    const p = document.getElementById("p" + (hintIdx + 1));
-    if (!p) return;
-    p.classList.remove("hint");
-    void p.offsetWidth;
-    p.classList.add("hint");
-    setTimeout(() => p.classList.remove("hint"), 700);
-    hintTimer = setTimeout(shake, 2500);
-  }
-  shake();
-}
-
-function stopHint() {
-  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
-  hintIdx = -1;
-}
-
-/* ──────────────────────────────────────────
-   상세보기
+   상세보기 (퍼즐용 - 슬롯 클릭 시)
 ────────────────────────────────────────── */
 
 function openDetail(idx) {
-  stopHint(); // 상세보기 열리면 흔들림 정지
   const detail = document.getElementById("detail");
-  document.getElementById("detail-img").src          = photos[idx];
-  document.getElementById("detail-date").textContent  = texts[idx].date;
-  document.getElementById("detail-title").textContent = texts[idx].title;
-  document.getElementById("detail-desc").textContent  = texts[idx].desc;
+  document.getElementById("detail-img").src          = albumPhotos[idx];
+  document.getElementById("detail-date").textContent  = albumTexts[idx].date;
+  document.getElementById("detail-title").textContent = albumTexts[idx].title;
+  document.getElementById("detail-desc").textContent  = albumTexts[idx].desc;
   detail.style.display = "flex";
   requestAnimationFrame(() => detail.classList.add("open"));
-
-  const nextIdx = idx + 1;
-  if (nextIdx < photos.length) {
-    detail.dataset.nextHint = nextIdx;
-  } else {
-    delete detail.dataset.nextHint;
-  }
 }
 
 function closeDetail() {
   const detail = document.getElementById("detail");
-  const nextHint = detail.dataset.nextHint;
   detail.classList.remove("open");
-  setTimeout(() => {
-    detail.style.display = "none";
-    if (nextHint !== undefined) {
-      setTimeout(() => hintPhoto(parseInt(nextHint)), 400);
-    }
-  }, 300);
+  setTimeout(() => { detail.style.display = "none"; }, 300);
 }
+
+function stopHint() {}
+function hintPhoto() {}
+function floatHeart() {}
 
 /* ──────────────────────────────────────────
    초기화

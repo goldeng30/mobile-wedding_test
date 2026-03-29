@@ -25,7 +25,7 @@
     </div>
     <img src="heart.png" id="page1-heart">
     <div class="name-block">
-      <span class="name-parents" id="name-parent-right">이홍철, 유선희의 장녀</span>
+      <span class="name-parents" id="name-parent-right">이흥철, 유선희의 장녀</span>
       <span class="name-main" id="name-main-right">이수현</span>
     </div>
   </div>
@@ -69,69 +69,100 @@
   </div>
 </div>
 
-<!-- 3페이지: 타임라인 -->
+<!-- 3페이지: 앨범 퍼즐 -->
 <div class="section" id="page3">
-  <!-- 페이지 제목 -->
-  <div id="page2-header">
-    <div id="page2-title">우리가 걸어온 길</div>
-    <div id="page2-divider"></div>
-    <div id="page2-sub">OUR STORY</div>
+
+  <!-- 제목 -->
+  <div id="album-title-area">
+    <div id="album-header">우리의 기억 앨범</div>
+    <div id="album-progress-bar"><div id="album-progress-fill"></div></div>
   </div>
 
-  <div class="timeline">
-    <div class="line"></div>
-    <div class="start-dot"></div>
-    <img src="topview.gif" id="topview">
-
-    <!-- 홀수: 사진 왼쪽, 텍스트 오른쪽 -->
-    <div class="tl-entry left" id="e1">
-      <div class="tl-dot"></div>
-      <div class="tl-photo" id="p1"><img src="photo1.jpg"></div>
-      <div class="tl-text">
-        <div class="tl-date" id="td1"></div>
-        <div class="tl-title" id="tt1"></div>
+  <!-- 앨범 슬롯 -->
+  <div id="album-section">
+    <div id="slots-grid">
+      <div class="slot" id="slot-0" data-answer="0" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">01</div>
+        <div class="slot-hint">첫 여행,<br>바다 앞 봄날</div>
+        <div class="slot-icon">🌊</div>
+        <div class="slot-check">✓</div>
       </div>
-    </div>
-
-    <!-- 짝수: 텍스트 왼쪽, 사진 오른쪽 -->
-    <div class="tl-entry right" id="e2">
-      <div class="tl-dot"></div>
-      <div class="tl-text">
-        <div class="tl-date" id="td2"></div>
-        <div class="tl-title" id="tt2"></div>
+      <div class="slot" id="slot-1" data-answer="1" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">02</div>
+        <div class="slot-hint">꽃비 내리던<br>공원 산책</div>
+        <div class="slot-icon">🌸</div>
+        <div class="slot-check">✓</div>
       </div>
-      <div class="tl-photo" id="p2"><img src="photo2.jpg"></div>
-    </div>
-
-    <div class="tl-entry left" id="e3">
-      <div class="tl-dot"></div>
-      <div class="tl-photo" id="p3"><img src="photo3.jpg"></div>
-      <div class="tl-text">
-        <div class="tl-date" id="td3"></div>
-        <div class="tl-title" id="tt3"></div>
+      <div class="slot" id="slot-2" data-answer="2" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">03</div>
+        <div class="slot-hint">제주<br>여름 바다</div>
+        <div class="slot-icon">☀️</div>
+        <div class="slot-check">✓</div>
       </div>
-    </div>
-
-    <div class="tl-entry right" id="e4">
-      <div class="tl-dot"></div>
-      <div class="tl-text">
-        <div class="tl-date" id="td4"></div>
-        <div class="tl-title" id="tt4"></div>
+      <div class="slot" id="slot-3" data-answer="3" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">04</div>
+        <div class="slot-hint">빨간 단풍길<br>드라이브</div>
+        <div class="slot-icon">🍂</div>
+        <div class="slot-check">✓</div>
       </div>
-      <div class="tl-photo" id="p4"><img src="photo4.jpg"></div>
-    </div>
-
-    <div class="tl-entry left" id="e5">
-      <div class="tl-dot"></div>
-      <div class="tl-photo" id="p5"><img src="photo5.jpg"></div>
-      <div class="tl-text">
-        <div class="tl-date" id="td5"></div>
-        <div class="tl-title" id="tt5"></div>
+      <div class="slot" id="slot-4" data-answer="4" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">05</div>
+        <div class="slot-hint">눈 내리는<br>크리스마스 이브</div>
+        <div class="slot-icon">❄️</div>
+        <div class="slot-check">✓</div>
+      </div>
+      <div class="slot" id="slot-5" data-answer="5" ondragover="albumDragOver(event)" ondrop="albumDrop(event)" ondragleave="albumDragLeave(event)">
+        <div class="slot-num">06</div>
+        <div class="slot-hint">드디어<br>우리 결혼해요!</div>
+        <div class="slot-icon">💍</div>
+        <div class="slot-check">✓</div>
       </div>
     </div>
   </div>
 
-  <button class="button btn-down" onclick="goToPage(3)">↓</button>
+  <!-- 사진 트레이: 캐릭터(좌) + 사진 가로 나열(우) -->
+  <div id="album-photo-row">
+    <div id="album-char-area">
+      <div id="album-speech-bubble">힌트를 읽고 맞는 칸에 넣어봐요!</div>
+      <img src="character.gif" id="album-char-img">
+    </div>
+    <div id="album-tray-area">
+      <div id="album-tray-label">사진을 위 칸에 드래그하세요</div>
+      <div id="photo-tray">
+        <div class="photo-card" id="apc-3" draggable="true" data-id="3" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo4.jpg" class="pc-img"><div class="pc-date">2025.10.14</div>
+        </div>
+        <div class="photo-card" id="apc-0" draggable="true" data-id="0" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo1.jpg" class="pc-img"><div class="pc-date">2025.03.24</div>
+        </div>
+        <div class="photo-card" id="apc-5" draggable="true" data-id="5" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo6.jpg" class="pc-img"><div class="pc-date">2026.09.05</div>
+        </div>
+        <div class="photo-card" id="apc-1" draggable="true" data-id="1" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo2.jpg" class="pc-img"><div class="pc-date">2025.05.11</div>
+        </div>
+        <div class="photo-card" id="apc-4" draggable="true" data-id="4" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo5.jpg" class="pc-img"><div class="pc-date">2025.12.24</div>
+        </div>
+        <div class="photo-card" id="apc-2" draggable="true" data-id="2" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
+          <img src="photo3.jpg" class="pc-img"><div class="pc-date">2025.07.28</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 넘어가기 -->
+  <div id="page3-scroll-hint" onclick="goToPage(3)">
+    <span id="page3-scroll-label">넘어가기</span>
+    <div id="page3-chevrons">
+      <svg viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="4,2 20,14 36,2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="4,2 20,14 36,2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
 </div>
 
 <!-- 4페이지: 일시 & 장소 -->
