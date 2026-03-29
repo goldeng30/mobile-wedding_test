@@ -279,8 +279,15 @@ function startGreetingAnimation() {
   const textEl  = document.getElementById("greeting-text");
   const char    = document.getElementById("page1-char");
 
-  // 말풍선 초기화 후 즉시 표시
+  // 전체 텍스트로 높이 미리 확보 후 박스 고정
+  textEl.innerHTML = greetingFull.replace(/\n/g, "<br>");
+  const fullHeight = textEl.offsetHeight;
+  textEl.style.height = fullHeight + "px";
+  textEl.style.overflow = "hidden";
   textEl.innerHTML = "";
+
+  const titleBlock = document.getElementById("p2-title-block");
+  if (titleBlock) { titleBlock.style.transition = "opacity 0.6s ease"; titleBlock.style.opacity = "1"; }
   bubble.style.transition = "opacity 0.6s ease";
   bubble.style.opacity = "1";
 
@@ -303,6 +310,8 @@ function startGreetingAnimation() {
         function typeNext() {
           if (i >= greetingFull.length) {
             if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
+            const hint2 = document.getElementById("page2-scroll-hint");
+            if (hint2) hint2.classList.add("visible");
             return;
           }
           const ch = greetingFull[i];
@@ -320,9 +329,28 @@ function startGreetingAnimation() {
    2→1: 인사말 → 1페이지
 ────────────────────────────────────────── */
 
+function onPage2ScrollHintClick() {
+  const hint = document.getElementById("page2-scroll-hint");
+  const sfx  = document.getElementById("sfx-button");
+  if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
+  if (hint) {
+    hint.style.transform = "translateX(-50%) scale(0.88)";
+    hint.style.opacity   = "0.6";
+    setTimeout(() => {
+      hint.style.transform = "translateX(-50%) scale(1)";
+      hint.style.opacity   = "1";
+      setTimeout(() => { goToPage(2); }, 120);
+    }, 150);
+  } else {
+    goToPage(2);
+  }
+}
+
 function transitionPage2To1() {
   const bubble = document.getElementById("greeting-bubble");
   const char   = document.getElementById("page1-char");
+  const hint2  = document.getElementById("page2-scroll-hint");
+  if (hint2) { hint2.classList.remove("visible"); hint2.style.opacity = "0"; }
   bubble.style.transition = "opacity 0.3s ease";
   bubble.style.opacity    = "0";
   char.style.transition   = "opacity 0.3s ease";
@@ -339,10 +367,8 @@ function transitionPage2To1() {
 function transitionPage2To3() {
   const bubble = document.getElementById("greeting-bubble");
   const char   = document.getElementById("page1-char");
-
-  // 말풍선 페이드아웃
-  bubble.style.transition = "opacity 0.4s ease";
-  bubble.style.opacity    = "0";
+  const hint2  = document.getElementById("page2-scroll-hint");
+  if (hint2) { hint2.classList.remove("visible"); hint2.style.opacity = "0"; }
 
   // 캐릭터 현재 위치 fixed로 고정 (슬라이드 내내 화면에 머무름)
   const rect = char.getBoundingClientRect();
@@ -610,7 +636,7 @@ function floatHeart() {
 
   const rect = topview.getBoundingClientRect();
   // topview 우측 상단에 배치
-  heart.style.left = (rect.right - 10) + "px";
+  heart.style.left = (rect.right - 28) + "px";
   heart.style.top  = (rect.top - 8) + "px";
 
   // 효과음

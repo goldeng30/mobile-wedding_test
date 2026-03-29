@@ -147,7 +147,7 @@ body {
   position: relative;
   z-index: 1;
 }
-.section:nth-child(2) { background: #fdf0f0; }
+.section:nth-child(2) { background: url('p2back.png') center/cover no-repeat; }
 .section:nth-child(3) { background: #ffecec; }
 .section:nth-child(4) { background: #fff7f7; }
 
@@ -556,11 +556,33 @@ body {
   display: none;
 }
 
+/* ── 2페이지 상하단 이미지 ── */
+
+#p2-upper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#p2-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+}
+
 /* ── 2페이지: 인사말 말풍선 ── */
 
 #greeting-bubble {
   position: absolute;
-  top: 12%;
+  top: 20%;
   left: 50%;
   transform: translateX(-50%);
   width: 75%;
@@ -580,8 +602,6 @@ body {
   text-align: center;
   font-family: 'Noto Sans KR', sans-serif;
   font-weight: 300;
-  height: 300px;
-  overflow: hidden;
 }
 
 #bubble-tail {
@@ -613,6 +633,92 @@ body {
   transform: translateX(-50%);
   width: 1px;
   height: 1px;
+}
+
+/* ── 2페이지 제목 ── */
+
+#p2-title-block {
+  position: absolute;
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 10;
+  opacity: 0;
+}
+
+#p2-title-sub {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+#p2-title-main {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+/* ── 2페이지 넘어가기 힌트 ── */
+
+#page2-scroll-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  z-index: 20;
+  opacity: 0;
+  color: var(--rose-dark);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+#page2-scroll-label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 300;
+}
+
+#page2-chevrons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+}
+
+#page2-chevrons svg {
+  width: 28px;
+  height: 14px;
+  display: block;
+}
+
+#page2-scroll-hint:active {
+  transform: translateX(-50%) scale(0.92);
+  opacity: 0.7;
+}
+
+#page2-scroll-hint.visible {
+  animation: hint-fadein 0.8s ease forwards;
+}
+
+#page2-scroll-hint.visible #page2-chevrons {
+  animation: chevron-poke 1.4s ease-in-out infinite;
 }
 
 /* ── 2페이지 제목 ── */
