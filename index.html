@@ -11,11 +11,13 @@
 <!-- 1페이지 -->
 <div class="section" id="page1">
   <div id="page1-scene">
+    <img src="upper_back.png" id="page1-upper">
     <img src="background.gif" id="page1-bg">
     <img src="character.gif" id="page1-char">
   </div>
 
   <!-- 하단 이름 문구 -->
+  <img src="bottom_back.png" id="page1-bottom">
   <div id="page1-names">
     <div class="name-block">
       <span class="name-parents" id="name-parent-left">김옥현의 차남</span>
@@ -23,16 +25,36 @@
     </div>
     <img src="heart.png" id="page1-heart">
     <div class="name-block">
-      <span class="name-parents" id="name-parent-right">이아빠, 유선희의 장녀</span>
+      <span class="name-parents" id="name-parent-right">이홍철, 유선희의 장녀</span>
       <span class="name-main" id="name-main-right">이수현</span>
     </div>
   </div>
 
-  <button class="button" onclick="goToPage(1)">↓</button>
+  <div id="page1-scroll-hint" onclick="onScrollHintClick()">
+    <span id="page1-scroll-label">넘어가기</span>
+    <div id="page1-chevrons">
+      <svg viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="4,2 20,14 36,2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="4,2 20,14 36,2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
 </div>
 
-<!-- 2페이지 -->
+<!-- 2페이지: 인사말 -->
 <div class="section" id="page2">
+  <div id="greeting-bubble">
+    <div id="greeting-text"></div>
+    <div id="bubble-tail"></div>
+  </div>
+  <div id="greeting-char-anchor"></div>
+  <button class="button" onclick="goToPage(2)">↓</button>
+</div>
+
+<!-- 3페이지: 타임라인 -->
+<div class="section" id="page3">
   <!-- 페이지 제목 -->
   <div id="page2-header">
     <div id="page2-title">우리가 걸어온 길</div>
@@ -93,11 +115,11 @@
     </div>
   </div>
 
-  <button class="button btn-down" onclick="goToPage(2)">↓</button>
+  <button class="button btn-down" onclick="goToPage(3)">↓</button>
 </div>
 
-<!-- 3페이지 -->
-<div class="section" id="page3">
+<!-- 4페이지: 일시 & 장소 -->
+<div class="section" id="page4">
   <div class="title">📅 일시 & 장소</div>
   <div class="subtitle">
     2026년 9월 05일<br>
@@ -115,6 +137,8 @@
 <audio id="sfx-drop" src="drop.mp3" preload="auto"></audio>
 <audio id="sfx-background" src="background.wav" preload="auto"></audio>
 <audio id="sfx-walk" src="walk.mp3" preload="auto"></audio>
+<audio id="sfx-typing" src="typing.mp3" preload="auto" loop></audio>
+<audio id="sfx-button" src="button.mp3" preload="auto"></audio>
 
 <!-- 스플래시 화면 -->
 <div id="splash">
@@ -142,5 +166,6 @@
 </div>
 
 <script src="script.js"></script>
+<img id="tl-heart" src="heart.png">
 </body>
 </html>
