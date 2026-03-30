@@ -165,7 +165,7 @@ function startExperience() {
     if (!el) return;
     el.volume = 1;
     el.muted  = true;
-    el.play().then(() => { el.pause(); el.muted = false; el.currentTime = 0; }).catch(() => {});
+    el.play().then(() => { el.pause(); el.muted = false; el.currentTime = 0; }).catch(() => { el.muted = false; });
   });
   splash.classList.add("hide");
   setTimeout(() => {
@@ -395,6 +395,7 @@ function transitionPage2To3() {
   const hint2  = document.getElementById("page2-scroll-hint");
   if (hint2) { hint2.classList.remove("visible"); }
 
+  // 캐릭터를 fixed로 고정
   const rect = char.getBoundingClientRect();
   char.style.cssText = [
     "position: fixed",
@@ -411,14 +412,37 @@ function transitionPage2To3() {
     "padding: 0"
   ].join("; ");
 
+  // walk 효과음 재생
+  const sfxWalk = document.getElementById("sfx-walk");
+  if (sfxWalk) { sfxWalk.muted = false; sfxWalk.volume = 1.0; sfxWalk.currentTime = 0; sfxWalk.play().catch(() => {}); }
+
+  // 캐릭터 아래로 걸어내려가며 페이드아웃 (1.2초로 느리게)
   setTimeout(() => {
-    char.style.transition = "opacity 0.4s ease";
+    const walkDistance = window.innerHeight * 0.30;
+    char.style.transition = "top 1.2s cubic-bezier(0.4, 0, 0.6, 1), opacity 1.0s ease";
+    char.style.top     = (rect.top + walkDistance) + "px";
     char.style.opacity = "0";
     char.style.pointerEvents = "none";
-    const sfxDown = document.getElementById("sfx-down");
-    if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
-    slideToPage(2, () => { initAlbumPuzzle(); });
-  }, 300);
+
+    // 캐릭터 퇴장 완료 후 슬라이딩 시작
+    setTimeout(() => {
+      if (sfxWalk) { sfxWalk.pause(); sfxWalk.currentTime = 0; }
+
+      // ★ 슬라이딩 전에 3페이지 요소 미리 숨기기
+      ["album-title-area","album-section","album-photo-row","page3-scroll-hint"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.transition = "none"; el.style.opacity = "0"; }
+      });
+      const charImg  = document.getElementById("album-char-img");
+      const speechBub = document.getElementById("album-speech-bubble");
+      if (charImg)   charImg.style.opacity  = "0";
+      if (speechBub) speechBub.style.opacity = "0";
+
+      const sfxDown = document.getElementById("sfx-down");
+      if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
+      slideToPage(2, () => { initAlbumPuzzle(); });
+    }, 1250);
+  }, 150);
 }
 
 /* ──────────────────────────────────────────
@@ -538,11 +562,218 @@ function initAlbumPuzzle() {
     const card = document.getElementById("apc-" + ids[i]);
     if (card) { card.classList.remove("placed", "dragging"); }
   }
+
+  // 3페이지 인트로 연출 시작
+  playAlbumIntro();
+}
+
+/* ──────────────────────────────────────────
+   3페이지 인트로
+   - introSet이 화면 중앙에서 설명 후
+   - scale(1) + charArea 위치로 이동
+   - 도착 후 position:fixed 해제 → charArea 안으로 DOM 이동
+   - 같은 요소가 끊김 없이 사진탭 캐릭터가 됨
+────────────────────────────────────────── */
+function playAlbumIntro() {
+  const titleArea  = document.getElementById("album-title-area");
+  const albumSec   = document.getElementById("album-section");
+  const photoRow   = document.getElementById("album-photo-row");
+  const scrollHint = document.getElementById("page3-scroll-hint");
+  const charImg    = document.getElementById("album-char-img");
+  const speechBub  = document.getElementById("album-speech-bubble");
+  const charArea   = document.getElementById("album-char-area");
+
+  [titleArea, albumSec, photoRow, scrollHint].forEach(el => {
+    if (el) { el.style.transition = "none"; el.style.opacity = "0"; }
+  });
+  // 원래 charImg, speechBub는 완전히 숨김 — introSet이 그 역할을 대신
+  if (charImg)   { charImg.style.display   = "none"; }
+  if (speechBub) { speechBub.style.display = "none"; }
+  // trayArea(사진 슬라이더)도 미리 숨김 — 나중에 별도 페이드인
+  const trayArea = document.getElementById("album-tray-area");
+  if (trayArea) { trayArea.style.transition = "none"; trayArea.style.opacity = "0"; }
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // charArea 실제 크기 측정
+  photoRow.style.visibility = "hidden";
+  photoRow.style.opacity    = "1";
+  const caRect = charArea.getBoundingClientRect();
+  photoRow.style.opacity    = "0";
+  photoRow.style.visibility = "";
+
+  const realW = caRect.width  || 68;
+  const realH = caRect.height || 120;
+
+  const SCALE   = Math.min((vw * 0.45) / realW, 3.5);
+  const scaledW = realW * SCALE;
+  const scaledH = realH * SCALE;
+
+  const setL   = vw / 2 - scaledW / 2;
+  const setT   = vh * 0.52 - scaledH / 2;
+  const startT = setT - vh * 0.22;
+
+  // 제목 페이드인
+  setTimeout(() => {
+    if (titleArea) { titleArea.style.transition = "opacity 0.6s ease"; titleArea.style.opacity = "1"; }
+  }, 80);
+
+  // introSet 생성
+  const introSet = document.createElement("div");
+  introSet.id = "album-intro-set";
+  introSet.style.cssText = [
+    `width:${realW}px`, `height:${realH}px`,
+    `left:${setL}px`,   `top:${startT}px`,
+    `transform:scale(${SCALE})`,
+    "transform-origin:top left",
+    "opacity:1", "transition:none"
+  ].join(";");
+
+  const introBubble = document.createElement("div");
+  introBubble.id = "album-intro-bubble";
+  const textSpan = document.createElement("span");
+  introBubble.appendChild(textSpan);
+
+  const introCharEl = document.createElement("img");
+  introCharEl.src = "character.gif";
+  introCharEl.id  = "album-intro-char";
+  introCharEl.style.opacity    = "0";
+  introCharEl.style.transition = "none";
+
+  introSet.appendChild(introBubble);
+  introSet.appendChild(introCharEl);
+  document.body.appendChild(introSet);
+
+  // STEP1: 내려오며 캐릭터 페이드인
+  setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      introSet.style.transition    = "top 0.65s cubic-bezier(0.34,1.15,0.64,1)";
+      introSet.style.top           = setT + "px";
+      introCharEl.style.transition = "opacity 0.45s ease";
+      introCharEl.style.opacity    = "1";
+    }));
+
+    // STEP2: 착지 후 말풍선 페이드인
+    setTimeout(() => {
+      introBubble.style.opacity = "1";
+
+      // STEP3: 타이핑 (1문장 → 1초 딜레이 → 2문장)
+      setTimeout(() => {
+        const msg1 = "실수로 사진들이 섞여버렸어요.";
+        const msg2 = "사진들의 올바른 위치를 찾아주세요!";
+        const sfxTyping = document.getElementById("sfx-typing");
+
+        function typeMsg(msg, onDone) {
+          if (sfxTyping) { sfxTyping.currentTime = 0; sfxTyping.play().catch(() => {}); }
+          let i = 0;
+          let displayText = "";
+          function typeNext() {
+            if (i >= msg.length) {
+              if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
+              onDone();
+              return;
+            }
+            displayText += msg[i];
+            textSpan.innerHTML = displayText;
+            i++;
+            setTimeout(typeNext, 60);
+          }
+          typeNext();
+        }
+
+        // 1문장 타이핑 → 1초 대기 → 2문장 타이핑 → STEP4
+        typeMsg(msg1, () => {
+          setTimeout(() => {
+            textSpan.innerHTML = "";
+            typeMsg(msg2, () => {
+
+            // STEP4: 타이핑 완료 → charArea 위치로 이동·축소
+            setTimeout(() => {
+              photoRow.style.visibility = "hidden";
+              photoRow.style.opacity    = "1";
+              const fCa = charArea.getBoundingClientRect();
+              photoRow.style.opacity    = "0";
+              photoRow.style.visibility = "";
+
+              const dur  = "0.85s";
+              const ease = "cubic-bezier(0.45,0,0.55,1)";
+              introSet.style.transition = `left ${dur} ${ease}, top ${dur} ${ease}, transform ${dur} ${ease}`;
+              introSet.style.left      = fCa.left + "px";
+              introSet.style.top       = fCa.top  + "px";
+              introSet.style.transform = "scale(1)";
+
+              // STEP5: 도착 후 처리
+              setTimeout(() => {
+                // introSet은 body fixed 그대로 유지 — 캐릭터 절대 안 사라짐
+
+                // photoRow, albumSec, trayArea, scrollHint 순차 페이드인
+                // 순서: 사진첩(trayArea) → 앨범(albumSec) → 스크롤힌트
+                // charArea는 opacity 0인채로 페이드인되지만 introSet이 fixed로 그 위를 덮고있음
+                photoRow.style.transition = "opacity 1.2s ease";
+                photoRow.style.opacity    = "1";
+
+                const trayArea = document.getElementById("album-tray-area");
+                const fi = (el, delay, d = 0.5) => {
+                  if (!el) return;
+                  setTimeout(() => { el.style.transition = `opacity ${d}s ease`; el.style.opacity = "1"; }, delay);
+                };
+                fi(trayArea,    0,     1.2);  // 사진첩 먼저 (1.2초 동안 서서히)
+                fi(albumSec,    1400,  1.2);  // 1.4초 후 앨범 (1.2초 동안 서서히)
+                fi(scrollHint,  2600,  0.8);  // 2.6초 후 스크롤 힌트
+                setTimeout(() => { if (albumSec) albumSec.style.pointerEvents = "auto"; }, 2600);
+
+                // 모든 요소 페이드인 완료 후 → introSet을 charArea 안으로 조용히 교체
+                setTimeout(() => {
+                  // charArea 안 기존 요소 제거
+                  if (charImg)   charImg.remove();
+                  if (speechBub) speechBub.remove();
+
+                  // introSet fixed 위치를 charArea 위치와 맞춤 (이미 거기 있지만 정확히)
+                  const caR = charArea.getBoundingClientRect();
+                  introSet.style.transition = "none";
+                  introSet.style.left   = caR.left + "px";
+                  introSet.style.top    = caR.top  + "px";
+
+                  // charArea에 삽입 후 즉시 static으로 전환
+                  charArea.appendChild(introSet);
+                  requestAnimationFrame(() => {
+                    introSet.style.position  = "static";
+                    introSet.style.left      = "";
+                    introSet.style.top       = "";
+                    introSet.style.transform = "";
+                    introSet.style.width     = "100%";
+                    introSet.style.height    = "100%";
+                    introSet.style.zIndex    = "";
+                  });
+
+                  // 말풍선 내용 교체
+                  textSpan.innerHTML = albumMsgs[0];
+                }, 2000); // 페이드인 끝난 후
+
+              }, 900);
+
+            }, 500);
+
+            }); // typeMsg msg2 콜백 끝
+          }, 1000); // 1초 딜레이
+        }); // typeMsg msg1 콜백 끝
+      }, 400);
+
+    }, 700);
+  }, 180);
 }
 
 function albumSetMsg(text) {
+  // 원래 speechBub 또는 introSet 안의 bubble 둘 다 커버
   const b = document.getElementById("album-speech-bubble");
   if (b) b.textContent = text;
+  const ib = document.getElementById("album-intro-bubble");
+  if (ib) {
+    const span = ib.querySelector("span");
+    if (span) span.innerHTML = text;
+    else ib.textContent = text;
+  }
 }
 
 function albumDragStart(e) {
