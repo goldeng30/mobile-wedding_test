@@ -414,6 +414,7 @@ function transitionPage2To3() {
   setTimeout(() => {
     char.style.transition = "opacity 0.4s ease";
     char.style.opacity = "0";
+    char.style.pointerEvents = "none";
     const sfxDown = document.getElementById("sfx-down");
     if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
     slideToPage(2, () => { initAlbumPuzzle(); });
@@ -516,6 +517,7 @@ function initAlbumPuzzle() {
   albumDragId  = null;
   document.getElementById("album-progress-fill").style.width = "0%";
   document.getElementById("album-speech-bubble").textContent = albumMsgs[0];
+  initPhotoSlider();
 
   // 슬롯 초기화
   for (let i = 0; i < 6; i++) {
@@ -606,25 +608,33 @@ function albumCheckDrop(slot, pid) {
 
   if (answer === pidInt) {
     slot.classList.add("correct");
-    slot.querySelector(".slot-num").style.display = "none";
-    slot.querySelector(".slot-hint").style.display = "none";
-    // 사진 이미지로 채우기
+
+    // 사진 이미지 — 폴라로이드 상단 영역에 표시
     const icon = slot.querySelector(".slot-icon");
     const img = document.createElement("img");
     img.src = albumPhotos[pidInt];
     img.className = "slot-filled-img";
-    img.style.cssText = "width:100%;height:60px;object-fit:cover;border-radius:7px;display:block;margin-bottom:3px;";
+    img.style.display = "block";
     icon.replaceWith(img);
-    // 날짜
-    const dateEl = document.createElement("div");
-    dateEl.style.cssText = "font-size:8px;color:#c9848a;font-family:'Noto Sans KR',sans-serif;";
-    dateEl.textContent = albumTexts[pidInt].date;
-    slot.appendChild(dateEl);
+
+    // 번호 숨기고 힌트는 하단 흰 영역에 유지 (텍스트만 날짜로 교체)
+    const numEl = slot.querySelector(".slot-num");
+    if (numEl) numEl.style.display = "none";
+    const hintEl = slot.querySelector(".slot-hint");
+    if (hintEl) hintEl.textContent = albumTexts[pidInt].date;
 
     const ck = slot.querySelector(".slot-check");
-    if (ck) ck.style.display = "flex";
+    if (ck) { ck.textContent = "✦ 딩동"; ck.style.display = "flex"; }
+
+    // 하트 버스트 이펙트
+    const burst = document.createElement("div");
+    burst.className = "slot-burst";
+    burst.textContent = "💕";
+    slot.appendChild(burst);
+    setTimeout(() => burst.remove(), 700);
 
     document.getElementById("apc-" + pid)?.classList.add("placed");
+    setTimeout(() => advanceToNextUnplaced(), 350);
 
     // 하트 효과음
     const sfx = document.getElementById("sfx-heart");
@@ -635,7 +645,7 @@ function albumCheckDrop(slot, pid) {
     albumSetMsg(albumMsgs[albumCorrect]);
 
     if (albumCorrect === 6) {
-      setTimeout(() => goToPage(3), 1500);
+      // 자동 넘어가기 없음
     }
   } else {
     slot.classList.add("wrong");
@@ -665,6 +675,272 @@ function closeDetail() {
   setTimeout(() => { detail.style.display = "none"; }, 300);
 }
 
+/* ──────────────────────────────────────────
+   사진 슬라이더 (팬 캐러셀)
+────────────────────────────────────────── */
+let traySlideIdx = 0;
+
+/** 각 카드에 data-pos를 계산해서 부여 */
+function updateCarouselPositions() {
+  const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
+  const total = cards.length;
+  cards.forEach(card => {
+    const cardId = parseInt(card.dataset.order); // 순서 인덱스
+    let diff = cardId - traySlideIdx;
+    // 원형 보정
+    if (diff > total / 2)  diff -= total;
+    if (diff < -total / 2) diff += total;
+    // -1, 0, 1 외는 숨김(-2)
+    const pos = Math.max(-2, Math.min(2, diff));
+    card.setAttribute("data-pos", pos);
+  });
+  updateTrayDots();
+}
+
+function initPhotoSlider() {
+  traySlideIdx = 0;
+  const slider = document.getElementById("photo-slider");
+  if (!slider) return;
+  // 각 카드에 순서 인덱스 부여
+  const cards = Array.from(slider.querySelectorAll(".photo-card"));
+  cards.forEach((card, i) => {
+    card.dataset.order = i;
+    card.removeAttribute("data-pos");
+    card.classList.remove("drag-ready", "dragging");
+    // transition 잠깐 끄고 초기 위치 세팅
+    card.style.transition = "none";
+  });
+  requestAnimationFrame(() => {
+    updateCarouselPositions();
+    requestAnimationFrame(() => {
+      cards.forEach(card => { card.style.transition = ""; });
+    });
+  });
+}
+
+function slideToTray(idx) {
+  closePhotoZoom();
+  const cards = document.querySelectorAll("#photo-slider .photo-card");
+  const total = cards.length;
+  traySlideIdx = ((idx % total) + total) % total;
+  updateCarouselPositions();
+}
+
+function openPhotoZoom(card) {
+  // 카드 안의 원본 img src 추출
+  const imgEl = card.querySelector(".pc-img");
+  if (!imgEl) return;
+  const src = imgEl.src;
+
+  // 오버레이 생성/재사용
+  let overlay = document.getElementById("photo-zoom-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "photo-zoom-overlay";
+    document.body.appendChild(overlay);
+  }
+
+  // 확대 이미지 컨테이너
+  let viewer = document.getElementById("photo-zoom-viewer");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.id = "photo-zoom-viewer";
+    document.body.appendChild(viewer);
+  }
+
+  // 원본 해상도 img 세팅
+  viewer.innerHTML = "";
+  const bigImg = document.createElement("img");
+  bigImg.src = src;
+  bigImg.id  = "photo-zoom-img";
+  viewer.appendChild(bigImg);
+
+  overlay.classList.add("active");
+  viewer.classList.add("active");
+
+  // 다음 탭에서 닫기
+  setTimeout(() => {
+    document.addEventListener("touchend", _zoomCloseTap, { once: true, passive: true });
+    document.addEventListener("click",    _zoomCloseTap, { once: true });
+  }, 50);
+}
+
+function _zoomCloseTap() {
+  closePhotoZoom();
+}
+
+function closePhotoZoom() {
+  const overlay = document.getElementById("photo-zoom-overlay");
+  const viewer  = document.getElementById("photo-zoom-viewer");
+  document.removeEventListener("touchend", _zoomCloseTap);
+  document.removeEventListener("click",    _zoomCloseTap);
+  if (!viewer || !viewer.classList.contains("active")) return;
+
+  // closing 애니메이션 재생 후 실제로 숨기기
+  viewer.classList.remove("active");
+  overlay.classList.remove("active");
+  viewer.classList.add("closing");
+  overlay.classList.add("closing");
+  setTimeout(() => {
+    viewer.classList.remove("closing");
+    overlay.classList.remove("closing");
+  }, 220);
+}
+
+function updateTrayDots() {
+  document.querySelectorAll(".tray-dot").forEach((d, i) => {
+    d.classList.toggle("active", i === traySlideIdx);
+  });
+}
+
+function advanceToNextUnplaced() {
+  const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
+  for (let i = 1; i <= cards.length; i++) {
+    const ni = (traySlideIdx + i) % cards.length;
+    if (!cards[ni].classList.contains("placed")) { slideToTray(ni); return; }
+  }
+}
+
+function attachTrayEvents() {
+  const tray = document.getElementById("album-photo-row");
+  if (!tray || tray._eventsAttached) return;
+  tray._eventsAttached = true;
+
+  let startX, startY, longPressTimer, dragMode = false, dragClone = null, activeCard = null;
+
+  tray.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // 브라우저 이미지 컨텍스트 메뉴 차단
+    const touch = e.touches[0];
+    startX = touch.clientX; startY = touch.clientY;
+    dragMode = false; activeCard = null;
+
+    // 터치 좌표로 카드 탐색 - z-index 높은 카드(메인) 우선
+    const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
+    const matched = cards.filter(c => {
+      if (c.classList.contains("placed")) return false;
+      const r = c.getBoundingClientRect();
+      return touch.clientX >= r.left && touch.clientX <= r.right &&
+             touch.clientY >= r.top  && touch.clientY <= r.bottom;
+    });
+    // data-pos="0"(메인) 우선, 그 다음 z-index 높은 순
+    matched.sort((a, b) => {
+      const posA = Math.abs(parseInt(a.getAttribute("data-pos") ?? "0"));
+      const posB = Math.abs(parseInt(b.getAttribute("data-pos") ?? "0"));
+      return posA - posB; // pos 절댓값 작을수록(=메인에 가까울수록) 앞으로
+    });
+    const card = matched[0] || null;
+
+    if (!card) return;
+    activeCard = card;
+
+    longPressTimer = setTimeout(() => {
+      dragMode = true;
+      card.classList.add("drag-ready");
+      if (navigator.vibrate) navigator.vibrate(40);
+
+      const r = card.getBoundingClientRect();
+      dragClone = card.cloneNode(true);
+      dragClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;` +
+        `opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;` +
+        `left:${r.left}px;top:${r.top}px;transition:none;`;
+      document.body.appendChild(dragClone);
+      card.classList.add("dragging");
+      albumDragId = card.dataset.id;
+    }, 150);
+  }, { passive: false });
+
+  tray.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (dragMode) {
+      e.preventDefault();
+      if (dragClone) {
+        dragClone.style.left = (touch.clientX - dragClone.offsetWidth / 2) + "px";
+        dragClone.style.top  = (touch.clientY - dragClone.offsetHeight / 2) + "px";
+      }
+      document.querySelectorAll(".slot").forEach(s => {
+        const r = s.getBoundingClientRect();
+        const over = touch.clientX > r.left && touch.clientX < r.right &&
+                     touch.clientY > r.top  && touch.clientY < r.bottom;
+        s.classList.toggle("drag-over", over);
+      });
+      return;
+    }
+
+    // 위쪽으로 30px 이상 스와이프 → 즉시 드래그 모드 진입
+    if (dy < -30 && Math.abs(dx) < Math.abs(dy) && activeCard && !dragMode) {
+      clearTimeout(longPressTimer);
+      dragMode = true;
+      activeCard.classList.add("drag-ready");
+      if (navigator.vibrate) navigator.vibrate(30);
+
+      const r = activeCard.getBoundingClientRect();
+      dragClone = activeCard.cloneNode(true);
+      dragClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;` +
+        `opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;` +
+        `left:${touch.clientX - r.width / 2}px;top:${touch.clientY - r.height / 2}px;transition:none;`;
+      document.body.appendChild(dragClone);
+      activeCard.classList.add("dragging");
+      albumDragId = activeCard.dataset.id;
+      e.preventDefault();
+      return;
+    }
+
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearTimeout(longPressTimer);
+  }, { passive: false });
+
+  tray.addEventListener("touchend", (e) => {
+    clearTimeout(longPressTimer);
+    e.preventDefault();
+
+    if (dragMode) {
+      const touch = e.changedTouches[0];
+      if (dragClone) { dragClone.remove(); dragClone = null; }
+      if (activeCard) activeCard.classList.remove("dragging", "drag-ready");
+      document.querySelectorAll(".slot").forEach(s => {
+        const r = s.getBoundingClientRect();
+        if (touch.clientX > r.left && touch.clientX < r.right &&
+            touch.clientY > r.top  && touch.clientY < r.bottom) {
+          s.classList.remove("drag-over");
+          if (albumDragId) albumCheckDrop(s, albumDragId);
+        } else {
+          s.classList.remove("drag-over");
+        }
+      });
+      albumDragId = null; activeCard = null; dragMode = false;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
+
+    // 스와이프 → 캐러셀 이동 (원형)
+    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) slideToTray(traySlideIdx + 1);
+      else        slideToTray(traySlideIdx - 1);
+      activeCard = null; return;
+    }
+
+    // 탭 → 옆 카드면 그쪽으로 이동, 메인 카드면 인라인 확대/축소
+    if (Math.abs(dx) < 14 && Math.abs(dy) < 14 && activeCard && !activeCard.classList.contains("placed")) {
+      const pos = parseInt(activeCard.getAttribute("data-pos") ?? "0");
+      if      (pos === -1) { slideToTray(traySlideIdx - 1); }
+      else if (pos ===  1) { slideToTray(traySlideIdx + 1); }
+      else if (pos === -2) { slideToTray(traySlideIdx - 2); }
+      else if (pos ===  2) { slideToTray(traySlideIdx + 2); }
+      else {
+        // 메인 카드(pos=0) → 확대
+        openPhotoZoom(activeCard);
+      }
+    }
+    activeCard = null;
+  }, { passive: false });
+}
+
 function stopHint() {}
 function hintPhoto() {}
 function floatHeart() {}
@@ -684,9 +960,14 @@ window.addEventListener("load", () => {
   if (_scene) _scene.style.opacity = "0";
 
   initWrapper();
+  attachTrayEvents();
 
   document.addEventListener("wheel",     e => e.preventDefault(), { passive: false });
-  document.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+  document.addEventListener("touchmove", e => {
+    // 앨범 드래그 중에는 막지 않음 (dragClone 이동 허용)
+    if (e.target.closest("#album-photo-row") || e.target.closest("#album-section")) return;
+    e.preventDefault();
+  }, { passive: false });
   document.addEventListener("keydown", e => {
     if (["ArrowUp","ArrowDown","PageUp","PageDown","Space"].includes(e.code)) {
       e.preventDefault();

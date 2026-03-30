@@ -74,7 +74,10 @@
 
   <!-- 제목 -->
   <div id="album-title-area">
-    <div id="album-header">우리의 기억 앨범</div>
+    <div id="album-header">
+  <span id="album-header-sub">우리의</span>
+  <span id="album-header-main">기억저장소</span>
+</div>
     <div id="album-progress-bar"><div id="album-progress-fill"></div></div>
   </div>
 
@@ -129,23 +132,33 @@
     <div id="album-tray-area">
       <div id="album-tray-label">사진을 위 칸에 드래그하세요</div>
       <div id="photo-tray">
-        <div class="photo-card" id="apc-3" draggable="true" data-id="3" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo4.jpg" class="pc-img"><div class="pc-date">2025.10.14</div>
+        <div id="photo-slider">
+          <div class="photo-card" id="apc-3" draggable="true" data-id="3" ondragstart="albumDragStart(event)">
+            <img src="photo4.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2025.10.14</div>
+          </div>
+          <div class="photo-card" id="apc-0" draggable="true" data-id="0" ondragstart="albumDragStart(event)">
+            <img src="photo1.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2025.03.24</div>
+          </div>
+          <div class="photo-card" id="apc-5" draggable="true" data-id="5" ondragstart="albumDragStart(event)">
+            <img src="photo6.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2026.09.05</div>
+          </div>
+          <div class="photo-card" id="apc-1" draggable="true" data-id="1" ondragstart="albumDragStart(event)">
+            <img src="photo2.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2025.05.11</div>
+          </div>
+          <div class="photo-card" id="apc-4" draggable="true" data-id="4" ondragstart="albumDragStart(event)">
+            <img src="photo5.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2025.12.24</div>
+          </div>
+          <div class="photo-card" id="apc-2" draggable="true" data-id="2" ondragstart="albumDragStart(event)">
+            <img src="photo3.jpg" class="pc-img" draggable="false" oncontextmenu="return false"><div class="pc-date">2025.07.28</div>
+          </div>
         </div>
-        <div class="photo-card" id="apc-0" draggable="true" data-id="0" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo1.jpg" class="pc-img"><div class="pc-date">2025.03.24</div>
-        </div>
-        <div class="photo-card" id="apc-5" draggable="true" data-id="5" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo6.jpg" class="pc-img"><div class="pc-date">2026.09.05</div>
-        </div>
-        <div class="photo-card" id="apc-1" draggable="true" data-id="1" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo2.jpg" class="pc-img"><div class="pc-date">2025.05.11</div>
-        </div>
-        <div class="photo-card" id="apc-4" draggable="true" data-id="4" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo5.jpg" class="pc-img"><div class="pc-date">2025.12.24</div>
-        </div>
-        <div class="photo-card" id="apc-2" draggable="true" data-id="2" ondragstart="albumDragStart(event)" ontouchstart="albumTouchStart(event)" ontouchmove="albumTouchMove(event)" ontouchend="albumTouchEnd(event)">
-          <img src="photo3.jpg" class="pc-img"><div class="pc-date">2025.07.28</div>
+        <div id="tray-dots">
+          <span class="tray-dot"></span>
+          <span class="tray-dot"></span>
+          <span class="tray-dot"></span>
+          <span class="tray-dot"></span>
+          <span class="tray-dot"></span>
+          <span class="tray-dot"></span>
         </div>
       </div>
     </div>
@@ -201,7 +214,7 @@
 </div>
 
 <!-- 상세보기 -->
-<div id="detail" style="display:none;">
+<div id="detail" style="display:none;" onclick="closeDetail()">
   <div class="detail-top"><img id="detail-img"></div>
   <div class="detail-bottom">
     <div class="detail-content">

@@ -132,7 +132,7 @@ body {
   justify-content: center;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .section:nth-child(1) {
@@ -679,7 +679,7 @@ body {
 
 #p2-bird {
   position: fixed;
-  top: 50%;
+  top: 28%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100vw;
@@ -914,13 +914,6 @@ body {
 
 /* ── 하트 플로팅 ── */
 
-@keyframes heart-float {
-  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
-  20%  { opacity: 1; transform: translateY(-10px) scale(1); }
-  80%  { opacity: 1; transform: translateY(-40px) scale(1); }
-  100% { opacity: 0; transform: translateY(-65px) scale(0.8); }
-}
-
 #tl-heart {
   position: fixed;
   width: 32px;
@@ -955,22 +948,44 @@ body {
 #page3 {
   justify-content: flex-start;
   align-items: stretch;
+  overflow: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding-bottom: 44px; /* 넘어가기 버튼 공간 */
 }
 
 /* 제목 영역 */
 #album-title-area {
   flex-shrink: 0;
-  padding: 14px 16px 8px;
+  padding: 14px 16px 28px;
   text-align: center;
 }
 
+
 #album-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+#album-header-sub {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--rose-dark);
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+}
+
+#album-header-main {
   font-family: 'Nanum Myeongjo', serif;
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
 }
 
 #album-progress-bar {
@@ -991,95 +1006,189 @@ body {
 
 /* 앨범 슬롯 영역 */
 #album-section {
-  flex: 1;
-  min-height: 0;
-  padding: 0 12px;
+  flex-shrink: 0;
+  margin: 0 10px;
+  padding: 4px;
   display: flex;
   flex-direction: column;
+  background: transparent;
+  pointer-events: none;
 }
 
 #slots-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 6px;
-  flex: 1;
-  min-height: 0;
+  grid-template-rows: repeat(2, auto);
+  column-gap: 10px;
+  row-gap: 18px;
+  align-content: center;
+  padding: 0 6px;
 }
 
+/* 폴라로이드 슬롯 */
 .slot {
-  border-radius: 10px;
-  border: 1.5px dashed var(--rose);
-  background: rgba(255,245,245,0.85);
-  padding: 4px 3px;
+  border-radius: 4px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(180,80,80,0.12), 0 1px 3px rgba(0,0,0,0.07);
+  padding: 0;
   cursor: pointer;
+  pointer-events: auto;
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  aspect-ratio: 3 / 4.2;
+  overflow: hidden;
+}
+
+/* 슬롯 상단 빈 사진 영역 — 균일 여백 + 새 디자인 */
+.slot::before {
+  content: '';
+  display: block;
+  width: calc(100% - 10px);
+  margin: 5px 5px 0;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.6) 0%, transparent 60%),
+    linear-gradient(135deg, #f9e8e8 0%, #f0d8d8 100%);
+  border: none;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(201,132,138,0.3),
+    inset 2px 2px 5px rgba(160,70,70,0.15),
+    inset -1px -1px 4px rgba(255,255,255,0.8);
+}
+
+/* 빈 슬롯 중앙 — 작은 + 기호 */
+.slot:not(.correct)::after {
+  content: '+';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 28px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  min-height: 0;
+  font-size: 20px;
+  font-weight: 200;
+  color: var(--rose-dark);
+  opacity: 0.3;
+  pointer-events: none;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .slot.drag-over {
-  border-color: var(--rose-dark);
-  background: #fce4e4;
-  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(180,80,80,0.30);
+  transform: scale(1.04) rotate(1deg);
 }
 
 .slot.correct {
-  border: 2px solid var(--rose-dark);
-  background: #fff0f0;
-  animation: slotPop 0.4s ease;
+  box-shadow:
+    0 0 0 2px var(--rose-dark),
+    0 0 16px 3px rgba(201,132,138,0.45),
+    0 4px 14px rgba(180,80,80,0.22);
+  animation: slotPop 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 .slot.wrong {
   animation: slotShake 0.4s ease;
 }
 
+/* 하단 텍스트 영역 */
 .slot-num {
-  font-size: 8px;
+  font-size: 7px;
+  font-weight: 700;
   color: var(--rose);
-  margin-bottom: 2px;
   font-family: 'Noto Sans KR', sans-serif;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 2px 3px 0;
+  flex-shrink: 0;
 }
 
 .slot-hint {
-  font-size: 8px;
-  color: var(--rose-dark);
+  font-size: 7px;
+  color: var(--text);
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.3;
   font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 300;
+  font-weight: 400;
+  padding: 0px 3px 3px;
+  flex-shrink: 0;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+.slot.correct .slot-hint {
+  color: var(--rose-dark);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  order: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
 }
 
 .slot-icon {
-  font-size: 20px;
+  display: none;
+}
+
+/* 사진이 채워지면 ::before 대신 이미지로 대체 */
+.slot.correct::before {
   display: none;
 }
 
 .slot-filled-img {
-  width: 100%;
-  height: 52px;
+  width: calc(100% - 10px);
+  margin: 5px 5px 0;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   object-fit: cover;
-  border-radius: 7px;
+  border-radius: 1px;
   display: none;
+  order: 1;
 }
 
 .slot-check {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 14px;
-  height: 14px;
+  top: 6px;
+  left: -2px;
+  width: 36px;
+  height: 16px;
   background: var(--rose-dark);
-  border-radius: 50%;
+  border-radius: 2px 6px 6px 2px;
   display: none;
   align-items: center;
   justify-content: center;
   font-size: 8px;
   color: #fff;
+  z-index: 3;
+  letter-spacing: 0.05em;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 700;
+  transform: rotate(-6deg);
+  box-shadow: 1px 2px 5px rgba(160,60,60,0.35);
+}
+
+/* 스탬프 왼쪽 삼각 노치 */
+.slot-check::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid var(--rose-dark);
+  pointer-events: none;
 }
 
 /* 사진 트레이 행: 캐릭터(좌) + 사진 가로 나열(우) */
@@ -1088,8 +1197,13 @@ body {
   display: flex;
   align-items: stretch;
   gap: 8px;
-  padding: 8px 12px 6px;
-  height: 110px;
+  margin: 24px 10px 0;
+  padding: 8px;
+  height: 150px;
+  border: 1.5px solid var(--rose);
+  border-radius: 14px;
+  background: rgba(255,245,245,0.6);
+  overflow: visible;
 }
 
 /* 캐릭터 영역 */
@@ -1100,6 +1214,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  pointer-events: none;
 }
 
 #album-speech-bubble {
@@ -1119,6 +1234,7 @@ body {
   justify-content: center;
   font-family: 'Noto Sans KR', sans-serif;
   font-weight: 300;
+  pointer-events: none;
 }
 
 #album-speech-bubble::after {
@@ -1161,6 +1277,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: visible;
 }
 
 #album-tray-label {
@@ -1173,79 +1290,223 @@ body {
   flex-shrink: 0;
 }
 
-/* 6장 가로 겹침 나열 */
+/* 사진 트레이 */
 #photo-tray {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: visible;
+  border-radius: 8px;
+}
+
+#photo-slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .photo-card {
-  flex-shrink: 0;
-  width: calc((100% + 5 * 14px) / 6);
-  border-radius: 8px;
-  border: 1.5px solid var(--rose);
+  position: absolute;
+  width: 52%;
+  height: auto;
+  top: 50%;
+  left: 50%;
+  border-radius: 10px;
+  border: 1px solid var(--rose-dark);
   cursor: grab;
-  transition: transform 0.2s, opacity 0.2s;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   user-select: none;
   overflow: hidden;
-  background: #fff5f5;
+  background: #222;
   -webkit-tap-highlight-color: transparent;
-  position: relative;
-  box-shadow: 2px 2px 6px rgba(180,80,80,0.12);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  box-shadow: 2px 4px 12px rgba(180,80,80,0.18);
+  transition: transform 0.38s cubic-bezier(0.35, 0, 0.25, 1),
+              opacity 0.38s ease,
+              box-shadow 0.38s ease,
+              z-index 0s;
+  will-change: transform, opacity;
 }
 
-.photo-card:not(:first-child) { margin-left: -14px; }
+/* JS가 data-pos 속성으로 위치 제어 */
+/* data-pos="0"  = 메인(중앙) */
+/* data-pos="-1" = 왼쪽 1번째 */
+/* data-pos="1"  = 오른쪽 1번째 */
+/* data-pos="-2" = 왼쪽 2번째 */
+/* data-pos="2"  = 오른쪽 2번째 */
 
-.photo-card:nth-child(1) { z-index: 1; }
-.photo-card:nth-child(2) { z-index: 2; }
-.photo-card:nth-child(3) { z-index: 3; }
-.photo-card:nth-child(4) { z-index: 4; }
-.photo-card:nth-child(5) { z-index: 5; }
-.photo-card:nth-child(6) { z-index: 6; }
+.photo-card[data-pos="0"] {
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 10;
+  opacity: 1;
+  box-shadow: 0 6px 22px rgba(180,80,80,0.30);
+}
 
-.photo-card:active { cursor: grabbing; transform: scale(0.93); z-index: 10; }
-.photo-card.dragging { opacity: 0.3; transform: scale(0.88); }
-.photo-card.placed { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
+.photo-card[data-pos="-1"] {
+  transform: translate(calc(-50% - 32%), -50%) scale(0.82) rotate(-6deg);
+  z-index: 7;
+  opacity: 0.75;
+}
 
-.pc-img {
+.photo-card[data-pos="1"] {
+  transform: translate(calc(-50% + 32%), -50%) scale(0.82) rotate(6deg);
+  z-index: 7;
+  opacity: 0.75;
+}
+
+.photo-card[data-pos="-2"] {
+  transform: translate(calc(-50% - 56%), -50%) scale(0.65) rotate(-12deg);
+  z-index: 4;
+  opacity: 0.45;
+  pointer-events: auto;
+}
+
+.photo-card[data-pos="2"] {
+  transform: translate(calc(-50% + 56%), -50%) scale(0.65) rotate(12deg);
+  z-index: 4;
+  opacity: 0.45;
+  pointer-events: auto;
+}
+
+.photo-card.dragging { opacity: 0.3 !important; }
+.photo-card.placed { opacity: 0.22 !important; pointer-events: none; filter: grayscale(1); }
+.photo-card.drag-ready {
+  box-shadow: 0 6px 20px rgba(180,80,80,0.45);
+}
+
+/* 확대 시 배경 딤 오버레이 */
+#photo-zoom-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 2000;
+  animation: overlay-in 0.2s ease forwards;
+}
+
+#photo-zoom-overlay.active { display: block; }
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 원본 해상도 뷰어 */
+#photo-zoom-viewer {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 88vw;
+  max-height: 80vh;
+  z-index: 2001;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  animation: zoom-in 0.25s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+}
+
+#photo-zoom-viewer.active { display: block; }
+
+#photo-zoom-img {
   width: 100%;
-  flex: 1;
-  min-height: 0;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   display: block;
 }
 
+@keyframes zoom-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.88); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes zoom-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.82); }
+}
+
+@keyframes overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+#photo-zoom-viewer.closing {
+  display: block;
+  animation: zoom-out 0.2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+#photo-zoom-overlay.closing {
+  display: block;
+  animation: overlay-out 0.2s ease forwards;
+}
+
+
+.pc-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  draggable: false;
+}
+
+
+/* 슬라이더 점 인디케이터 */
+#tray-dots {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.tray-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rose);
+  opacity: 0.25;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.tray-dot.active {
+  opacity: 1;
+  transform: scale(1.3);
+}
+
 .pc-date {
-  font-size: 6.5px;
-  color: var(--rose-dark);
-  padding: 2px 0;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 300;
-  flex-shrink: 0;
-  text-align: center;
+  display: none;
 }
 
 /* 넘어가기 버튼 */
 #page3-scroll-hint {
-  flex-shrink: 0;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   cursor: pointer;
-  padding: 6px 0 10px;
+  padding: 4px 0 10px;
   color: var(--rose-dark);
+  background: linear-gradient(to bottom, transparent, rgba(255,236,236,0.95) 35%);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: opacity 0.15s ease;
+  z-index: 10;
 }
 
 #page3-scroll-label {
@@ -1270,14 +1531,32 @@ body {
 }
 
 #page3-scroll-hint:active {
-  transform: scale(0.92);
   opacity: 0.7;
 }
 
 @keyframes slotPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.1) rotate(-1deg); }
+  65%  { transform: scale(1.05) rotate(1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* 맞췄을 때 슬롯 위 하트 버스트 */
+.slot-burst {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 22px;
+  z-index: 10;
+  pointer-events: none;
+  animation: burst-heart 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) forwards;
+}
+
+@keyframes burst-heart {
+  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 1; }
+  55%  { transform: translate(-50%, -60%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -80%) scale(0.9); opacity: 0; }
 }
 
 @keyframes slotShake {
