@@ -301,9 +301,15 @@ function startGreetingAnimation() {
   textEl.innerHTML = "";
 
   const titleBlock = document.getElementById("p2-title-block");
-  if (titleBlock) { titleBlock.style.transition = "opacity 0.6s ease"; titleBlock.style.opacity = "1"; }
-  bubble.style.transition = "opacity 0.6s ease";
+  if (titleBlock) { titleBlock.style.transition = "opacity 1.4s ease"; titleBlock.style.opacity = "1"; }
+  bubble.style.transition = "opacity 1.4s ease";
   bubble.style.opacity = "1";
+
+  // upper/bottom 이미지 말풍선과 함께 페이드인
+  const p2upper = document.getElementById("p2-upper");
+  const p2bottom = document.getElementById("p2-bottom");
+  if (p2upper)  p2upper.style.opacity  = "1";
+  if (p2bottom) p2bottom.style.opacity = "1";
 
   // 말풍선 렌더링 후 캐릭터를 바로 아래 배치
   requestAnimationFrame(() => {
@@ -372,14 +378,18 @@ function onPage2ScrollHintClick() {
 }
 
 function transitionPage2To1() {
-  const bubble = document.getElementById("greeting-bubble");
-  const char   = document.getElementById("page1-char");
-  const hint2  = document.getElementById("page2-scroll-hint");
+  const bubble  = document.getElementById("greeting-bubble");
+  const char    = document.getElementById("page1-char");
+  const hint2   = document.getElementById("page2-scroll-hint");
+  const p2upper  = document.getElementById("p2-upper");
+  const p2bottom = document.getElementById("p2-bottom");
   if (hint2) { hint2.classList.remove("visible"); }
   bubble.style.transition = "opacity 0.3s ease";
   bubble.style.opacity    = "0";
   char.style.transition   = "opacity 0.3s ease";
   char.style.opacity      = "0";
+  if (p2upper)  { p2upper.style.transition  = "opacity 0.3s ease"; p2upper.style.opacity  = "0"; }
+  if (p2bottom) { p2bottom.style.transition = "opacity 0.3s ease"; p2bottom.style.opacity = "0"; }
   setTimeout(() => {
     slideToPage(0, () => { playPage1Animation(); });
   }, 300);
@@ -450,6 +460,7 @@ function transitionPage2To3() {
 ────────────────────────────────────────── */
 
 function transitionPage3To2() {
+  stopPetalFall();
   const sfxDown = document.getElementById("sfx-down");
   if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
   slideToPage(1, () => { startGreetingAnimation(); });
@@ -460,6 +471,7 @@ function transitionPage3To2() {
 ────────────────────────────────────────── */
 
 function transitionPage3To4() {
+  stopPetalFall();
   const sfxDown = document.getElementById("sfx-down");
   if (sfxDown) { sfxDown.currentTime = 0; sfxDown.play().catch(() => {}); }
   slideToPage(3, null);
@@ -636,7 +648,7 @@ function playAlbumIntro() {
   introBubble.appendChild(textSpan);
 
   const introCharEl = document.createElement("img");
-  introCharEl.src = "character.gif";
+  introCharEl.src = "cry.gif";
   introCharEl.id  = "album-intro-char";
   introCharEl.style.opacity    = "0";
   introCharEl.style.transition = "none";
@@ -658,38 +670,87 @@ function playAlbumIntro() {
     setTimeout(() => {
       introBubble.style.opacity = "1";
 
-      // STEP3: 타이핑 (1문장 → 1초 딜레이 → 2문장)
+      // STEP3: 말풍선 내용 3번 교체 — 각각 새로 타이핑
       setTimeout(() => {
-        const msg1 = "실수로 사진들이 섞여버렸어요.";
-        const msg2 = "사진들의 올바른 위치를 찾아주세요!";
+        // 대화 3세트: 각 세트는 줄 배열
+        const dialogues = [
+          ["어떡하죠?.."],                        // 1번: 1줄 (가운데)
+          ["실수로", "사진들이", "섞여버렸어요"], // 2번: 3줄
+          ["여러분의", "도움이", "필요해요"]      // 3번: 3줄
+        ];
         const sfxTyping = document.getElementById("sfx-typing");
 
-        function typeMsg(msg, onDone) {
-          if (sfxTyping) { sfxTyping.currentTime = 0; sfxTyping.play().catch(() => {}); }
-          let i = 0;
-          let displayText = "";
-          function typeNext() {
-            if (i >= msg.length) {
-              if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
-              onDone();
-              return;
-            }
-            displayText += msg[i];
-            textSpan.innerHTML = displayText;
-            i++;
-            setTimeout(typeNext, 60);
-          }
-          typeNext();
+        // 기존 textSpan 제거 — bubble은 JS가 직접 관리
+        textSpan.remove();
+
+        // bubble 내부를 교체하고 줄 div 반환
+        function setBubbleLines(lineTexts) {
+          introBubble.innerHTML = "";
+          // 말풍선 꼬리 (::before/::after는 CSS에 있으므로 별도 처리 불필요)
+          return lineTexts.map(() => {
+            const d = document.createElement("div");
+            d.style.cssText = "opacity:0; white-space:nowrap; line-height:1.6;";
+            introBubble.appendChild(d);
+            return d;
+          });
         }
 
-        // 1문장 타이핑 → 1초 대기 → 2문장 타이핑 → STEP4
-        typeMsg(msg1, () => {
-          setTimeout(() => {
-            textSpan.innerHTML = "";
-            typeMsg(msg2, () => {
+        // 한 줄 타이핑 — sfx 제어 없음 (세트 단위로 관리)
+        function typeLine(el, text, onDone) {
+          el.style.opacity = "1";
+          let i = 0, buf = "";
+          function next() {
+            if (i >= text.length) { onDone(); return; }
+            buf += text[i++];
+            el.textContent = buf;
+            setTimeout(next, 65);
+          }
+          next();
+        }
+
+        // 한 세트(여러 줄) 순차 타이핑 — sfx는 세트 시작/끝에만
+        function typeDialogue(lineTexts, onDone) {
+          const divs = setBubbleLines(lineTexts);
+          if (lineTexts.length === 1) {
+            introBubble.style.justifyContent = "center";
+            divs[0].style.textAlign = "center";
+          } else {
+            introBubble.style.justifyContent = "center";
+          }
+          // sfx 세트 시작
+          if (sfxTyping) { sfxTyping.currentTime = 0; sfxTyping.play().catch(() => {}); }
+          let idx = 0;
+          function nextLine() {
+            if (idx >= divs.length) {
+              // sfx 세트 끝
+              if (sfxTyping) { sfxTyping.pause(); sfxTyping.currentTime = 0; }
+              onDone(); return;
+            }
+            typeLine(divs[idx++], lineTexts[idx - 1], nextLine); // 줄 끝나면 바로 다음 줄
+          }
+          nextLine();
+        }
+
+        // 3세트 순차 실행 (세트 사이 1초 대기 후 내용 교체)
+        function runDialogues(idx, onAllDone) {
+          if (idx >= dialogues.length) { onAllDone(); return; }
+          typeDialogue(dialogues[idx], () => {
+            if (idx < dialogues.length - 1) {
+              setTimeout(() => runDialogues(idx + 1, onAllDone), 1000);
+            } else {
+              onAllDone();
+            }
+          });
+        }
+
+        // 3세트 타이핑 → STEP4
+        runDialogues(0, () => {
 
             // STEP4: 타이핑 완료 → charArea 위치로 이동·축소
             setTimeout(() => {
+              // 이동 전 캐릭터를 normal 표정으로 복귀
+              introCharEl.src = "character.gif";
+
               photoRow.style.visibility = "hidden";
               photoRow.style.opacity    = "1";
               const fCa = charArea.getBoundingClientRect();
@@ -720,8 +781,11 @@ function playAlbumIntro() {
                 };
                 fi(trayArea,    0,     1.2);  // 사진첩 먼저 (1.2초 동안 서서히)
                 fi(albumSec,    1400,  1.2);  // 1.4초 후 앨범 (1.2초 동안 서서히)
-                fi(scrollHint,  2600,  0.8);  // 2.6초 후 스크롤 힌트
+                // scrollHint는 튜토리얼 종료 후 표시 (아래 showAlbumTutorial 참조)
                 setTimeout(() => { if (albumSec) albumSec.style.pointerEvents = "auto"; }, 2600);
+
+                // 앨범 페이드인 완료와 동시에 튜토리얼
+                setTimeout(() => { showAlbumTutorial(scrollHint); }, 2600);
 
                 // 모든 요소 페이드인 완료 후 → introSet을 charArea 안으로 조용히 교체
                 setTimeout(() => {
@@ -748,20 +812,255 @@ function playAlbumIntro() {
                   });
 
                   // 말풍선 내용 교체
-                  textSpan.innerHTML = albumMsgs[0];
+                  introBubble.innerHTML = "";
+                  const finalSpan = document.createElement("span");
+                  finalSpan.textContent = albumMsgs[0];
+                  introBubble.appendChild(finalSpan);
                 }, 2000); // 페이드인 끝난 후
 
               }, 900);
 
             }, 500);
 
-            }); // typeMsg msg2 콜백 끝
-          }, 1000); // 1초 딜레이
-        }); // typeMsg msg1 콜백 끝
+        }); // runDialogues 콜백 끝
       }, 400);
 
     }, 700);
   }, 180);
+}
+
+/* ──────────────────────────────────────────
+   3페이지 튜토리얼 오버레이
+────────────────────────────────────────── */
+
+function showAlbumTutorial(scrollHint) {
+  const slot0    = document.getElementById("slot-0");
+  const tray     = document.getElementById("album-photo-row");
+  if (!slot0 || !tray) return;
+
+  const s = slot0.getBoundingClientRect();
+  const t = tray.getBoundingClientRect();
+  const pad = 6;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // 오버레이 컨테이너
+  const ov = document.createElement("div");
+  ov.id = "album-tutorial";
+
+  // 딤: 단순 rgba div 4개로 slot-0, photo-row 구멍 주변을 둘러쌈
+  // 방식: 상단 / 중단좌 / 중단우 / 하단 4 패널 + 트레이위 패널
+  function mkDim(l,t2,w,h) {
+    const d = document.createElement("div");
+    d.style.cssText = `position:absolute;left:${l}px;top:${t2}px;width:${w}px;height:${h}px;background:rgba(20,5,5,0.72);pointer-events:none;`;
+    return d;
+  }
+
+  // slot-0 구멍: sx, sy, sw, sh
+  const sx = s.left - pad, sy = s.top - pad, sw = s.width + pad*2, sh = s.height + pad*2;
+  // tray 구멍: tx, ty, tw, th
+  const tx = t.left - pad, ty = t.top - pad, tw = t.width + pad*2, th = t.height + pad*2;
+
+  // 구멍이 없는 영역들 (slot-0 기준 좌우상하 + tray 기준)
+  // 상단 전체 (0 ~ min(sy, ty))
+  const topEnd = Math.min(sy, ty);
+  if (topEnd > 0) ov.appendChild(mkDim(0, 0, vw, topEnd));
+
+  // slot-0 행: slot-0 좌측 + slot-0 우측
+  // slot-0와 tray 사이 행 (sy ~ ty 또는 ty ~ sy)
+  // 접근: slot-0 구멍 행
+  ov.appendChild(mkDim(0,   sy,   sx,         sh));          // slot-0 좌
+  ov.appendChild(mkDim(sx + sw, sy, vw - sx - sw, sh));      // slot-0 우
+
+  // slot-0 아래 ~ tray 위 사이
+  const midTop = sy + sh, midBot = ty;
+  if (midBot > midTop) ov.appendChild(mkDim(0, midTop, vw, midBot - midTop));
+
+  // tray 행: tray 좌측 + tray 우측
+  ov.appendChild(mkDim(0,   ty,   tx,         th));
+  ov.appendChild(mkDim(tx + tw, ty, vw - tx - tw, th));
+
+  // tray 아래 ~ 화면 하단
+  const botTop = ty + th;
+  if (vh > botTop) ov.appendChild(mkDim(0, botTop, vw, vh - botTop));
+
+  // 하이라이트 테두리 (slot-0)
+  const hlSlot = document.createElement("div");
+  hlSlot.id = "tut-highlight-slot";
+  hlSlot.style.cssText = `left:${sx}px;top:${sy}px;width:${sw}px;height:${sh}px;`;
+  ov.appendChild(hlSlot);
+
+  // 하이라이트 테두리 (photo-row)
+  const hlTray = document.createElement("div");
+  hlTray.id = "tut-highlight-tray";
+  hlTray.style.cssText = `left:${tx}px;top:${ty}px;width:${tw}px;height:${th}px;`;
+  ov.appendChild(hlTray);
+
+  // 화살표 SVG (트레이 → 슬롯 방향)
+  const svgNS = "http://www.w3.org/2000/svg";
+  const ax1 = tx + tw / 2;
+  const ay1 = ty - pad - 8;
+  const ax2 = sx + sw / 2;
+  const ay2 = sy + sh + pad + 8;
+
+  const arrowSvg = document.createElementNS(svgNS, "svg");
+  arrowSvg.id = "tut-arrow";
+  arrowSvg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
+  arrowSvg.style.cssText = `position:absolute;inset:0;width:${vw}px;height:${vh}px;pointer-events:none;`;
+
+  // 곡선 경로
+  const cx = (ax1 + ax2) / 2 + 30;
+  const cy = (ay1 + ay2) / 2;
+  const path = document.createElementNS(svgNS, "path");
+  path.setAttribute("d", `M ${ax1} ${ay1} Q ${cx} ${cy} ${ax2} ${ay2}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "rgba(255,200,200,0.9)");
+  path.setAttribute("stroke-width", "2.5");
+  path.setAttribute("stroke-dasharray", "6 4");
+  path.setAttribute("marker-end", "url(#tut-arrowhead)");
+
+  // 화살촉 마커
+  const markerDefs = document.createElementNS(svgNS, "defs");
+  const marker = document.createElementNS(svgNS, "marker");
+  marker.setAttribute("id", "tut-arrowhead");
+  marker.setAttribute("markerWidth", "8");
+  marker.setAttribute("markerHeight", "8");
+  marker.setAttribute("refX", "4");
+  marker.setAttribute("refY", "4");
+  marker.setAttribute("orient", "auto");
+  const arrowPoly = document.createElementNS(svgNS, "polygon");
+  arrowPoly.setAttribute("points", "0,0 8,4 0,8");
+  arrowPoly.setAttribute("fill", "rgba(255,180,180,0.95)");
+  marker.appendChild(arrowPoly);
+  markerDefs.appendChild(marker);
+  arrowSvg.appendChild(markerDefs);
+  arrowSvg.appendChild(path);
+  ov.appendChild(arrowSvg);
+
+  // 안내 툴팁 — 트레이 위에
+  const tip = document.createElement("div");
+  tip.id = "tut-tooltip";
+  const tipText = "적절한 사진을 골라 앨범 칸으로 드래그해주세요 🌸";
+  tip.innerHTML = tipText.replace(/\n/g, "<br>");
+
+  // 트레이 위쪽에 배치, 화면 밖 나가면 아래쪽으로
+  const tipH = 68;
+  let tipTop = ty - pad - tipH - 16;
+  let arrowDir = "arrow-down";
+  if (tipTop < 8) {
+    tipTop = ty + th + pad + 16;
+    arrowDir = "arrow-up";
+  }
+  tip.classList.add(arrowDir);
+  tip.style.cssText = `top:${tipTop}px;left:50%;transform:translateX(-50%);`;
+  ov.appendChild(tip);
+
+  // 탭해서 닫기 안내
+  const dismiss = document.createElement("div");
+  dismiss.id = "tut-dismiss";
+  dismiss.textContent = "화면을 탭하면 시작해요";
+  ov.appendChild(dismiss);
+
+  document.body.appendChild(ov);
+
+  // 페이드인
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ov.classList.add("visible");
+  }));
+
+  // 탭/클릭으로 닫기
+  function closeTutorial() {
+    ov.style.transition = "opacity 0.35s ease";
+    ov.style.opacity = "0";
+    setTimeout(() => {
+      ov.remove();
+      startPetalFall();   // 튜토리얼 닫히면 꽃잎 시작
+      // 넘어가기 버튼 페이드인
+      if (scrollHint) {
+        scrollHint.style.transition = "opacity 0.8s ease";
+        scrollHint.style.opacity = "1";
+      }
+    }, 370);
+  }
+  setTimeout(() => {
+    ov.addEventListener("click",    closeTutorial, { once: true });
+    ov.addEventListener("touchend", closeTutorial, { once: true, passive: true });
+  }, 600);
+}
+
+/* ──────────────────────────────────────────
+   꽃잎 낙하 애니메이션
+────────────────────────────────────────── */
+
+let _petalTimer = null;
+
+function stopPetalFall() {
+  if (_petalTimer) { clearTimeout(_petalTimer); _petalTimer = null; }
+  const canvas = document.getElementById("petal-canvas");
+  if (canvas) canvas.remove();
+}
+
+function startPetalFall() {
+  const old = document.getElementById("petal-canvas");
+  if (old) old.remove();
+  if (_petalTimer) { clearTimeout(_petalTimer); _petalTimer = null; }
+
+  const canvas = document.createElement("div");
+  canvas.id = "petal-canvas";
+  // page3 안에 absolute로 배치해야 section z-index 계층 아래로 들어감
+  const page3 = document.getElementById("page3");
+  if (page3) page3.appendChild(canvas);
+  else document.body.appendChild(canvas);
+
+  const srcs = ["fall1.png", "fall2.png", "fall3.png"];
+  const vw   = window.innerWidth;
+
+  function spawnPetal() {
+    if (typeof currentPage !== "undefined" && currentPage !== 2) return;
+
+    const petal = document.createElement("div");
+    petal.className = "petal";
+
+    const img = document.createElement("img");
+    img.src = srcs[Math.floor(Math.random() * srcs.length)];
+    img.draggable = false;
+    petal.appendChild(img);
+
+    // page3 기준 절대좌표 — 화면 상단(page3 top)에서 시작
+    petal.style.left = (Math.random() * (vw + 30) - 15) + "px";
+    petal.style.top  = "-50px";
+
+    // 생성 시 크기 고정 (0.7 ~ 1.5 랜덤)
+    const size = Math.round(22 * (0.7 + Math.random() * 0.8));
+    petal.style.width  = size + "px";
+    petal.style.height = size + "px";
+
+    const base = (Math.random() - 0.5) * 30;
+    const amp  = 18 + Math.random() * 14;
+    petal.style.setProperty("--sw1", (base + amp)  + "px");
+    petal.style.setProperty("--sw2", (base - amp)  + "px");
+    petal.style.setProperty("--r1",  ((Math.random()-0.5)*40)  + "deg");
+    petal.style.setProperty("--r2",  ((Math.random()-0.5)*80)  + "deg");
+    petal.style.setProperty("--r3",  ((Math.random()-0.5)*120) + "deg");
+    petal.style.setProperty("--r4",  ((Math.random()-0.5)*160) + "deg");
+
+    const dur = 7 + Math.random() * 4;
+    petal.style.animation = `petalFall ${dur}s linear forwards`;
+
+    canvas.appendChild(petal);
+    petal.addEventListener("animationend", () => petal.remove(), { once: true });
+  }
+
+  // 처음 2장 즉시, 1장 0.6초 후
+  spawnPetal(); spawnPetal();
+  setTimeout(spawnPetal, 600);
+
+  // 이후 1.8~2.5초 간격으로 무한 반복
+  function scheduleNext() {
+    const delay = 1800 + Math.random() * 700;
+    _petalTimer = setTimeout(() => { spawnPetal(); scheduleNext(); }, delay);
+  }
+  scheduleNext();
 }
 
 function albumSetMsg(text) {
@@ -1205,3 +1504,24 @@ window.addEventListener("load", () => {
     }
   });
 });
+
+/* ──────────────────────────────────────────
+   네이버 지도 앱 열기
+────────────────────────────────────────── */
+function openNaverMap() {
+  const lat  = 38.1947;
+  const lng  = 128.5403;
+  const name = encodeURIComponent("델피노 골프 앤 리조트 웨딩");
+
+  // 네이버 지도 앱 URL 스킴
+  const appUrl = `nmap://place?lat=${lat}&lng=${lng}&name=${name}&appname=com.wedding.invitation`;
+  // 앱 없을 때 네이버 지도 모바일 웹 fallback
+  const webUrl = `https://map.naver.com/v5/search/${encodeURIComponent("델피노 골프 앤 리조트")}`;
+
+  // 앱 실행 시도
+  window.location.href = appUrl;
+  // 1.5초 후에도 페이지가 그대로면 앱 없는 것 → 웹으로
+  setTimeout(() => {
+    window.location.href = webUrl;
+  }, 1500);
+}

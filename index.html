@@ -180,12 +180,46 @@
 
 <!-- 4페이지: 일시 & 장소 -->
 <div class="section" id="page4">
-  <div class="title">📅 일시 & 장소</div>
-  <div class="subtitle">
-    2026년 9월 05일<br>
-    오후 2시<br><br>
-    서울 ○○웨딩홀
+
+  <div id="p4-inner">
+
+    <!-- 상단 제목 -->
+    <div id="p4-header">
+      <span id="p4-header-sub">함께해주세요</span>
+      <span id="p4-header-main">오시는 길</span>
+    </div>
+
+    <!-- 날짜/시간 -->
+    <div id="p4-datetime">
+      <div class="p4-row">
+        <span class="p4-icon">📅</span>
+        <span class="p4-text">2026년 9월 5일 토요일</span>
+      </div>
+      <div class="p4-row">
+        <span class="p4-icon">🕐</span>
+        <span class="p4-text">오후 12시 30분</span>
+      </div>
+    </div>
+
+    <!-- 구분선 -->
+    <div id="p4-divider"></div>
+
+    <!-- 장소 정보 -->
+    <div id="p4-venue">
+      <div id="p4-venue-name">델피노 골프 앤 리조트 웨딩</div>
+      <div id="p4-venue-addr">강원 고성군 토성면 미시령옛길 1153<br>델피노리조트 B동 지하 2층</div>
+    </div>
+
+    <!-- 지도 이미지 (클릭 시 네이버 지도 앱) -->
+    <div id="p4-map-wrap" onclick="openNaverMap()">
+      <img src="map.png" id="p4-map-img" alt="지도">
+      <div id="p4-map-overlay">
+        <span id="p4-map-overlay-text">📍 탭하여 지도 열기</span>
+      </div>
+    </div>
+
   </div>
+
   <button class="button" onclick="goToPage(0)">↑</button>
 </div>
 

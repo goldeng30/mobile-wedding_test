@@ -610,6 +610,8 @@ body {
   display: block;
   z-index: 2;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
 #p2-bottom {
@@ -620,6 +622,8 @@ body {
   display: block;
   z-index: 2;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
 /* ── 2페이지: 인사말 말풍선 ── */
@@ -738,7 +742,7 @@ body {
   gap: 2px;
   cursor: pointer;
   z-index: 20;
-  opacity: 1;
+  opacity: 0;
   color: var(--rose-dark);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
@@ -1323,18 +1327,20 @@ body {
   background: #fff;
   border: 1.5px solid var(--rose);
   border-radius: 10px;
-  padding: 5px 7px;
+  padding: 7px 10px;
   font-size: 8.5px;
   color: var(--rose-dark);
-  line-height: 1.5;
+  line-height: 1.6;
   text-align: center;
   position: relative;
   width: 100%;
   flex: 1;
-  min-height: 40px;
+  min-height: 52px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0px;
   font-family: 'Noto Sans KR', sans-serif;
   font-weight: 300;
   pointer-events: none;
@@ -1571,7 +1577,7 @@ body {
   bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
+  display: none;
   gap: 5px;
   pointer-events: none;
 }
@@ -1668,4 +1674,302 @@ body {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
+}
+
+/* ── 3페이지 튜토리얼 오버레이 ── */
+
+#album-tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+#album-tutorial.visible {
+  opacity: 1;
+}
+
+/* 어두운 딤 레이어 */
+#album-tutorial-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 10, 10, 0.72);
+}
+
+/* 하이라이트 구멍 — clip-path로 뚫음 (JS가 좌표 주입) */
+#album-tutorial-dim.clipped {
+  /* JS가 동적으로 clip-path 설정 */
+}
+
+/* 하이라이트 테두리 (slot-0) */
+#tut-highlight-slot {
+  position: absolute;
+  border: 2px solid rgba(255, 200, 200, 0.85);
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(255,160,160,0.25), 0 0 20px 4px rgba(255,130,130,0.3);
+  pointer-events: none;
+  animation: tut-pulse 1.6s ease-in-out infinite;
+}
+
+/* 하이라이트 테두리 (photo-tray) */
+#tut-highlight-tray {
+  position: absolute;
+  border: 2px solid rgba(255, 200, 200, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px rgba(255,160,160,0.25), 0 0 20px 4px rgba(255,130,130,0.3);
+  pointer-events: none;
+  animation: tut-pulse 1.6s ease-in-out infinite 0.4s;
+}
+
+@keyframes tut-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255,160,160,0.25), 0 0 16px 3px rgba(255,130,130,0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(255,160,160,0.4),  0 0 28px 6px rgba(255,130,130,0.45); }
+}
+
+/* 화살표 SVG */
+#tut-arrow {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+}
+
+/* 안내 말풍선 */
+#tut-tooltip {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid var(--rose);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.7;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(180,80,80,0.18);
+}
+
+#tut-tooltip::after {
+  content: '';
+  position: absolute;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#tut-tooltip.arrow-down::after {
+  bottom: -9px;
+  border-top: 9px solid var(--rose);
+}
+
+#tut-tooltip.arrow-up::after {
+  top: -9px;
+  border-bottom: 9px solid var(--rose);
+}
+
+/* 탭해서 닫기 힌트 */
+#tut-dismiss {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255,220,220,0.75);
+  letter-spacing: 0.15em;
+  pointer-events: none;
+  animation: tut-blink 2s ease-in-out infinite;
+}
+
+@keyframes tut-blink {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* ── 3페이지 꽃잎 낙하 ── */
+
+#petal-canvas {
+  position: absolute;  /* page3 안에 absolute로 배치 */
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;          /* ::before/::after와 같은 레벨 — UI(z-index:1) 뒤 */
+  overflow: hidden;
+}
+
+.petal {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transform-origin: center center;
+  /* 크기는 JS에서 생성 시 랜덤 지정 */
+}
+
+.petal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 살랑살랑: 좌우로 물결치며 천천히 낙하 */
+@keyframes petalFall {
+  0%   { transform: translateY(0vh)   translateX(0px)          rotate(0deg);   opacity: 0;    }
+  6%   {                                                                        opacity: 0.75; }
+  25%  { transform: translateY(25vh)  translateX(var(--sw1))   rotate(var(--r1)); }
+  50%  { transform: translateY(50vh)  translateX(var(--sw2))   rotate(var(--r2)); }
+  75%  { transform: translateY(75vh)  translateX(var(--sw1))   rotate(var(--r3)); opacity: 0.65; }
+  95%  {                                                                        opacity: 0.5;  }
+  98%  {                                                                        opacity: 0;    }
+  100% { transform: translateY(108vh) translateX(var(--sw2))   rotate(var(--r4)); opacity: 0;    }
+}
+
+/* ── 4페이지: 오시는 길 ── */
+
+#page4 {
+  background: linear-gradient(160deg, #fff5f5 0%, #fce8e8 60%, #f5d8da 100%);
+  justify-content: center;
+  align-items: center;
+}
+
+#p4-inner {
+  width: 88%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100dvh - 60px);
+  overflow: hidden;
+}
+
+#p4-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+#p4-header-sub {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--rose-dark);
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+#p4-header-main {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.12em;
+}
+
+#p4-datetime {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 12px rgba(180,80,80,0.09);
+  margin-bottom: 14px;
+}
+
+.p4-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.p4-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.p4-text {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+#p4-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--rose), transparent);
+  margin: 4px 0 14px;
+  opacity: 0.6;
+}
+
+#p4-venue {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+#p4-venue-name {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+#p4-venue-addr {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  line-height: 1.8;
+  font-weight: 300;
+}
+
+#p4-map-wrap {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(180,80,80,0.18);
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+#p4-map-wrap:active {
+  opacity: 0.88;
+  transform: scale(0.99);
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+#p4-map-img {
+  width: 100%;
+  display: block;
+  border-radius: 16px;
+}
+
+#p4-map-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 14px;
+  background: linear-gradient(to top, rgba(60,10,10,0.55) 0%, transparent 100%);
+  border-radius: 0 0 16px 16px;
+  pointer-events: none;
+}
+
+#p4-map-overlay-text {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,240,240,0.92);
+  letter-spacing: 0.08em;
 }
