@@ -596,7 +596,7 @@ function playAlbumIntro() {
   const charArea   = document.getElementById("album-char-area");
 
   [titleArea, albumSec, photoRow, scrollHint].forEach(el => {
-    if (el) { el.style.transition = "none"; el.style.opacity = "0"; }
+    if (el) { el.style.transition = "none"; el.style.opacity = "0"; el.style.pointerEvents = "none"; }
   });
   // 원래 charImg, speechBub는 완전히 숨김 — introSet이 그 역할을 대신
   if (charImg)   { charImg.style.display   = "none"; }
@@ -773,6 +773,8 @@ function playAlbumIntro() {
                 // charArea는 opacity 0인채로 페이드인되지만 introSet이 fixed로 그 위를 덮고있음
                 photoRow.style.transition = "opacity 1.2s ease";
                 photoRow.style.opacity    = "1";
+                // 페이드인 완료 후 터치 활성화 (1.2s)
+                setTimeout(() => { if (photoRow) photoRow.style.pointerEvents = ""; }, 1200);
 
                 const trayArea = document.getElementById("album-tray-area");
                 const fi = (el, delay, d = 0.5) => {
@@ -844,9 +846,10 @@ function showAlbumTutorial(scrollHint) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // 오버레이 컨테이너
+  // 오버레이 컨테이너 — 터치는 아래(slot-0, photo-row)로 통과
   const ov = document.createElement("div");
   ov.id = "album-tutorial";
+  ov.style.pointerEvents = "none";
 
   // 딤: 단순 rgba div 4개로 slot-0, photo-row 구멍 주변을 둘러쌈
   // 방식: 상단 / 중단좌 / 중단우 / 하단 4 패널 + 트레이위 패널
@@ -958,7 +961,7 @@ function showAlbumTutorial(scrollHint) {
   // 탭해서 닫기 안내
   const dismiss = document.createElement("div");
   dismiss.id = "tut-dismiss";
-  dismiss.textContent = "화면을 탭하면 시작해요";
+  dismiss.textContent = "첫 번째 칸에 사진을 맞춰보세요";
   ov.appendChild(dismiss);
 
   document.body.appendChild(ov);
@@ -974,18 +977,15 @@ function showAlbumTutorial(scrollHint) {
     ov.style.opacity = "0";
     setTimeout(() => {
       ov.remove();
-      startPetalFall();   // 튜토리얼 닫히면 꽃잎 시작
-      // 넘어가기 버튼 페이드인
+      startPetalFall();
       if (scrollHint) {
         scrollHint.style.transition = "opacity 0.8s ease";
         scrollHint.style.opacity = "1";
+        scrollHint.style.pointerEvents = "";
       }
     }, 370);
   }
-  setTimeout(() => {
-    ov.addEventListener("click",    closeTutorial, { once: true });
-    ov.addEventListener("touchend", closeTutorial, { once: true, passive: true });
-  }, 600);
+  // 클릭으로 닫기 제거 — slot-0 정답 드래그 시에만 닫힘
 }
 
 /* ──────────────────────────────────────────
@@ -1075,61 +1075,8 @@ function albumSetMsg(text) {
   }
 }
 
-function albumDragStart(e) {
-  albumDragId = e.currentTarget.dataset.id;
-  e.currentTarget.classList.add("dragging");
-}
-function albumDragOver(e) {
-  e.preventDefault();
-  e.currentTarget.classList.add("drag-over");
-}
-function albumDragLeave(e) {
-  e.currentTarget.classList.remove("drag-over");
-}
-function albumDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove("drag-over");
-  if (!albumDragId) return;
-  albumCheckDrop(e.currentTarget, albumDragId);
-  document.getElementById("apc-" + albumDragId)?.classList.remove("dragging");
-  albumDragId = null;
-}
-
-function albumTouchStart(e) {
-  albumTouchCard = e.currentTarget;
-  albumDragId = albumTouchCard.dataset.id;
-  const r = albumTouchCard.getBoundingClientRect();
-  albumTouchClone = albumTouchCard.cloneNode(true);
-  albumTouchClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;`;
-  document.body.appendChild(albumTouchClone);
-  albumTouchCard.classList.add("dragging");
-}
-function albumTouchMove(e) {
-  e.preventDefault();
-  const t = e.touches[0];
-  if (albumTouchClone) {
-    albumTouchClone.style.left = (t.clientX - 34) + "px";
-    albumTouchClone.style.top  = (t.clientY - 34) + "px";
-  }
-  document.querySelectorAll(".slot").forEach(s => {
-    const r = s.getBoundingClientRect();
-    (t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom)
-      ? s.classList.add("drag-over") : s.classList.remove("drag-over");
-  });
-}
-function albumTouchEnd(e) {
-  if (albumTouchClone) { albumTouchClone.remove(); albumTouchClone = null; }
-  albumTouchCard?.classList.remove("dragging");
-  const t = e.changedTouches[0];
-  document.querySelectorAll(".slot").forEach(s => {
-    const r = s.getBoundingClientRect();
-    if (t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
-      s.classList.remove("drag-over");
-      if (albumDragId) albumCheckDrop(s, albumDragId);
-    }
-  });
-  albumDragId = null; albumTouchCard = null;
-}
+/* ── 드래그 + 트레이 통합 핸들러 ── */
+function initCardPointerDrag() { /* attachTrayEvents와 통합됨 */ }
 
 function albumCheckDrop(slot, pid) {
   if (slot.classList.contains("correct")) return;
@@ -1147,11 +1094,9 @@ function albumCheckDrop(slot, pid) {
     img.style.display = "block";
     icon.replaceWith(img);
 
-    // 번호 숨기고 힌트는 하단 흰 영역에 유지 (텍스트만 날짜로 교체)
+    // 번호 숨기고 힌트 텍스트는 그대로 유지
     const numEl = slot.querySelector(".slot-num");
     if (numEl) numEl.style.display = "none";
-    const hintEl = slot.querySelector(".slot-hint");
-    if (hintEl) hintEl.textContent = albumTexts[pidInt].date;
 
     const ck = slot.querySelector(".slot-check");
     if (ck) { ck.textContent = "✦ 딩동"; ck.style.display = "flex"; }
@@ -1166,6 +1111,25 @@ function albumCheckDrop(slot, pid) {
     document.getElementById("apc-" + pid)?.classList.add("placed");
     setTimeout(() => advanceToNextUnplaced(), 350);
 
+    // slot-0 정답 시 튜토리얼 자동 종료
+    if (slot.id === "slot-0") {
+      const tutOv = document.getElementById("album-tutorial");
+      if (tutOv) {
+        tutOv.style.transition = "opacity 0.35s ease";
+        tutOv.style.opacity = "0";
+        setTimeout(() => {
+          tutOv.remove();
+          startPetalFall();
+          const scrollHint = document.getElementById("page3-scroll-hint");
+          if (scrollHint) {
+            scrollHint.style.transition = "opacity 0.8s ease";
+            scrollHint.style.opacity = "1";
+            scrollHint.style.pointerEvents = "";
+          }
+        }, 370);
+      }
+    }
+
     // 하트 효과음
     const sfx = document.getElementById("sfx-heart");
     if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
@@ -1175,7 +1139,7 @@ function albumCheckDrop(slot, pid) {
     albumSetMsg(albumMsgs[albumCorrect]);
 
     if (albumCorrect === 6) {
-      // 자동 넘어가기 없음
+      setTimeout(() => showAlbumComplete(), 800);
     }
   } else {
     slot.classList.add("wrong");
@@ -1198,6 +1162,144 @@ function openDetail(idx) {
   detail.style.display = "flex";
   requestAnimationFrame(() => detail.classList.add("open"));
 }
+
+/* ──────────────────────────────────────────
+   앨범 완성 축하 연출
+────────────────────────────────────────── */
+
+function showAlbumComplete() {
+  // 효과음
+  const sfxComplete = document.getElementById("sfx-complete");
+  if (sfxComplete) { sfxComplete.currentTime = 0; sfxComplete.play().catch(() => {}); }
+
+  // 슬롯 글로우
+  document.querySelectorAll(".slot.correct").forEach(s => s.classList.add("all-done"));
+
+  // fall 이미지 대량 낙하 (화면 전면 fixed)
+  runCompleteFall();
+
+  // 4초 후 (낙하 효과 끝나면) 트레이를 댄스 영역으로 교체
+  setTimeout(() => swapTrayToDance(), 4000);
+}
+
+function swapTrayToDance() {
+  const photoRow = document.getElementById("album-photo-row");
+  if (!photoRow) return;
+
+  // 부드럽게 페이드아웃 후 교체
+  photoRow.style.transition = "opacity 0.4s ease";
+  photoRow.style.opacity = "0";
+
+  setTimeout(() => {
+    photoRow.innerHTML = `
+      <div id="dance-area">
+        <div id="dance-notes-wrap">
+          <span class="dance-note" style="--ni:0">♪</span>
+          <span class="dance-note" style="--ni:1">♫</span>
+          <span class="dance-note" style="--ni:2">♩</span>
+          <span class="dance-note" style="--ni:3">♬</span>
+          <span class="dance-note" style="--ni:4">♪</span>
+          <span class="dance-note" style="--ni:5">♫</span>
+        </div>
+        <img src="dance.gif" id="dance-gif" alt="dance">
+        <div id="dance-label">
+          <span class="dance-char" style="--i:0">감</span>
+          <span class="dance-char" style="--i:1">사</span>
+          <span class="dance-char" style="--i:2">의</span>
+          <span class="dance-space"> </span>
+          <span class="dance-char" style="--i:3">댄</span>
+          <span class="dance-char" style="--i:4">스</span>
+        </div>
+      </div>
+    `;
+    photoRow.style.transition = "opacity 0.5s ease";
+    photoRow.style.opacity = "1";
+  }, 420);
+}
+
+function runCompleteFall() {
+  // 기존 완성 캔버스 정리
+  const old = document.getElementById("complete-fall-wrap");
+  if (old) old.remove();
+
+  // fixed 래퍼 — 화면 최전면
+  const wrap = document.createElement("div");
+  wrap.id = "complete-fall-wrap";
+  wrap.style.cssText = "position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden;";
+  document.body.appendChild(wrap);
+
+  const srcs = ["fall1.png", "fall2.png", "fall3.png"];
+  const vw   = window.innerWidth;
+  const vh   = window.innerHeight;
+
+  function spawnOne(delayMs) {
+    setTimeout(() => {
+      if (!document.getElementById("complete-fall-wrap")) return;
+
+      const petal = document.createElement("div");
+      petal.className = "petal complete-petal";
+
+      const img = document.createElement("img");
+      img.src = srcs[Math.floor(Math.random() * srcs.length)];
+      img.draggable = false;
+      petal.appendChild(img);
+
+      // 크기 — 완성 효과라 기존보다 약간 크게
+      const size = Math.round(28 * (0.8 + Math.random() * 0.9));
+      petal.style.width  = size + "px";
+      petal.style.height = size + "px";
+      petal.style.position = "absolute";
+      petal.style.top  = "-60px";
+      petal.style.left = (Math.random() * (vw + 40) - 20) + "px";
+
+      const base = (Math.random() - 0.5) * 40;
+      const amp  = 20 + Math.random() * 20;
+      petal.style.setProperty("--sw1", (base + amp) + "px");
+      petal.style.setProperty("--sw2", (base - amp) + "px");
+      petal.style.setProperty("--r1",  ((Math.random()-0.5)*50)  + "deg");
+      petal.style.setProperty("--r2",  ((Math.random()-0.5)*90)  + "deg");
+      petal.style.setProperty("--r3",  ((Math.random()-0.5)*130) + "deg");
+      petal.style.setProperty("--r4",  ((Math.random()-0.5)*170) + "deg");
+
+      // 속도 — 기존 7~11s보다 살짝 빠르게
+      const dur = 3.0 + Math.random() * 1.2;
+      petal.style.animation = `petalFall ${dur}s linear forwards`;
+
+      wrap.appendChild(petal);
+      petal.addEventListener("animationend", () => petal.remove(), { once: true });
+    }, delayMs);
+  }
+
+  // ── Phase 1: 시작 즉시 40개 한꺼번에 (화면 전체에 분산)
+  for (let i = 0; i < 40; i++) {
+    spawnOne(i * 20);
+  }
+
+  // ── Phase 2: 0.4s 후 추가 25개
+  for (let i = 0; i < 25; i++) {
+    spawnOne(400 + i * 25);
+  }
+
+  // ── Phase 3: 1.2s 후 15개 더
+  for (let i = 0; i < 15; i++) {
+    spawnOne(1200 + i * 40);
+  }
+
+  // ── Phase 4: 2s~3.4s 동안 잔여 흘려보내기
+  for (let i = 0; i < 10; i++) {
+    spawnOne(2000 + i * 140);
+  }
+
+  // 3.4초 후 페이드아웃 (0.6s) → 총 4초
+  setTimeout(() => {
+    const w = document.getElementById("complete-fall-wrap");
+    if (!w) return;
+    w.style.transition = "opacity 0.6s ease";
+    w.style.opacity = "0";
+    setTimeout(() => w.remove(), 650);
+  }, 3400);
+}
+
 
 function closeDetail() {
   const detail = document.getElementById("detail");
@@ -1228,7 +1330,6 @@ function updateCarouselPositions() {
 }
 
 function initPhotoSlider() {
-  traySlideIdx = 0;
   const slider = document.getElementById("photo-slider");
   if (!slider) return;
   // 각 카드에 순서 인덱스 부여
@@ -1237,9 +1338,11 @@ function initPhotoSlider() {
     card.dataset.order = i;
     card.removeAttribute("data-pos");
     card.classList.remove("drag-ready", "dragging");
-    // transition 잠깐 끄고 초기 위치 세팅
     card.style.transition = "none";
   });
+  // slot-0 정답(data-id="0") 카드를 맨 처음 메인으로
+  const answerCard = cards.findIndex(c => c.dataset.id === "0");
+  traySlideIdx = answerCard >= 0 ? answerCard : 0;
   requestAnimationFrame(() => {
     updateCarouselPositions();
     requestAnimationFrame(() => {
@@ -1248,11 +1351,24 @@ function initPhotoSlider() {
   });
 }
 
-function slideToTray(idx) {
+function slideToTray(idx, direction) {
   closePhotoZoom();
-  const cards = document.querySelectorAll("#photo-slider .photo-card");
+  const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
   const total = cards.length;
-  traySlideIdx = ((idx % total) + total) % total;
+  let target = ((idx % total) + total) % total;
+
+  // placed 카드는 건너뜀 — direction(1 또는 -1)으로 방향 유지
+  if (direction !== undefined) {
+    let tries = 0;
+    while (cards[target].classList.contains("placed") && tries < total) {
+      target = ((target + direction) % total + total) % total;
+      tries++;
+    }
+    // 모두 placed면 현재 유지
+    if (tries >= total) return;
+  }
+
+  traySlideIdx = target;
   updateCarouselPositions();
 }
 
@@ -1336,139 +1452,189 @@ function attachTrayEvents() {
   if (!tray || tray._eventsAttached) return;
   tray._eventsAttached = true;
 
-  let startX, startY, longPressTimer, dragMode = false, dragClone = null, activeCard = null;
+  /* ── 공유 드래그 상태 ── */
+  let dragClone = null, dragCard = null, cloneW = 0, cloneH = 0;
+  let isDragging = false;
 
-  tray.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // 브라우저 이미지 컨텍스트 메뉴 차단
-    const touch = e.touches[0];
-    startX = touch.clientX; startY = touch.clientY;
-    dragMode = false; activeCard = null;
+  /* ── 공유 터치 상태 ── */
+  let startX = 0, startY = 0;
+  let activeCard = null;   // 트레이 탭/스와이프용
+  let dragStarted = false; // 위로 스와이프 드래그 전환 여부
 
-    // 터치 좌표로 카드 탐색 - z-index 높은 카드(메인) 우선
+  /* 슬라이더 안의 카드 중 (x,y)에 해당하는 카드 반환 */
+  function getCardAt(x, y) {
     const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
-    const matched = cards.filter(c => {
+    const candidates = cards.filter(c => {
       if (c.classList.contains("placed")) return false;
       const r = c.getBoundingClientRect();
-      return touch.clientX >= r.left && touch.clientX <= r.right &&
-             touch.clientY >= r.top  && touch.clientY <= r.bottom;
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
     });
-    // data-pos="0"(메인) 우선, 그 다음 z-index 높은 순
-    matched.sort((a, b) => {
-      const posA = Math.abs(parseInt(a.getAttribute("data-pos") ?? "0"));
-      const posB = Math.abs(parseInt(b.getAttribute("data-pos") ?? "0"));
-      return posA - posB; // pos 절댓값 작을수록(=메인에 가까울수록) 앞으로
+    candidates.sort((a, b) =>
+      Math.abs(parseInt(a.getAttribute("data-pos") ?? "0")) -
+      Math.abs(parseInt(b.getAttribute("data-pos") ?? "0"))
+    );
+    return candidates[0] || null;
+  }
+
+  /* 드래그 시작 — 클론 중앙을 (x,y)에 맞춤 */
+  function startDrag(card, x, y) {
+    isDragging = true;
+    dragStarted = true;
+    dragCard = card;
+    albumDragId = card.dataset.id;
+    card.classList.add("dragging", "drag-ready");
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    const r = card.getBoundingClientRect();
+    cloneW = r.width * 1.15;
+    cloneH = r.height * 1.15;
+
+    dragClone = card.cloneNode(true);
+    dragClone.classList.remove("dragging", "drag-ready"); // cloneNode로 딸려온 클래스 제거
+    // photo-card CSS(transform:translate(-50%,-50%) 등)가 남아있으면 위치가 틀어지므로
+    // style.cssText로 완전 덮어쓰고 transform:none 반드시 포함
+    dragClone.style.cssText =
+      `position:fixed;width:${cloneW}px;height:${cloneH}px;` +
+      `transform:none;top:${y - cloneH / 2}px;left:${x - cloneW / 2}px;` +
+      `opacity:1;pointer-events:none;z-index:9999;` +
+      `border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.35);transition:none;`;
+    dragClone.id = "photo-drag-clone";
+    document.body.appendChild(dragClone);
+  }
+
+  /* 드래그 이동 */
+  function moveDrag(x, y) {
+    if (!dragClone) return;
+    dragClone.style.left = (x - cloneW / 2) + "px";
+    dragClone.style.top  = (y - cloneH / 2) + "px";
+    document.querySelectorAll(".slot").forEach(s => {
+      const r = s.getBoundingClientRect();
+      s.classList.toggle("drag-over",
+        x > r.left && x < r.right && y > r.top && y < r.bottom);
     });
-    const card = matched[0] || null;
+  }
 
-    if (!card) return;
-    activeCard = card;
+  /* 드래그 종료 — 슬롯 드롭 판정 */
+  function endDrag(x, y) {
+    if (dragClone) { dragClone.remove(); dragClone = null; }
+    if (dragCard)  { dragCard.classList.remove("dragging", "drag-ready"); }
+    document.querySelectorAll(".slot").forEach(s => {
+      const r = s.getBoundingClientRect();
+      s.classList.remove("drag-over");
+      if (x > r.left && x < r.right && y > r.top && y < r.bottom) {
+        if (albumDragId) albumCheckDrop(s, albumDragId);
+      }
+    });
+    isDragging = false; dragCard = null; albumDragId = null;
+  }
 
-    longPressTimer = setTimeout(() => {
-      dragMode = true;
-      card.classList.add("drag-ready");
-      if (navigator.vibrate) navigator.vibrate(40);
+  /* 드래그 취소 */
+  function cancelDrag() {
+    if (dragClone) { dragClone.remove(); dragClone = null; }
+    if (dragCard)  { dragCard.classList.remove("dragging", "drag-ready"); }
+    document.querySelectorAll(".slot").forEach(s => s.classList.remove("drag-over"));
+    isDragging = false; dragCard = null; albumDragId = null;
+  }
 
-      const r = card.getBoundingClientRect();
-      dragClone = card.cloneNode(true);
-      dragClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;` +
-        `opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;` +
-        `left:${r.left}px;top:${r.top}px;transition:none;`;
-      document.body.appendChild(dragClone);
-      card.classList.add("dragging");
-      albumDragId = card.dataset.id;
-    }, 150);
-  }, { passive: false });
+  /* ── TOUCHSTART ── */
+  tray.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    dragStarted = false;
+    activeCard = getCardAt(touch.clientX, touch.clientY);
+  }, { passive: true });
 
+  /* ── TOUCHMOVE ── */
   tray.addEventListener("touchmove", (e) => {
     const touch = e.touches[0];
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
 
-    if (dragMode) {
+    /* 이미 드래그 진행 중 */
+    if (isDragging) {
       e.preventDefault();
-      if (dragClone) {
-        dragClone.style.left = (touch.clientX - dragClone.offsetWidth / 2) + "px";
-        dragClone.style.top  = (touch.clientY - dragClone.offsetHeight / 2) + "px";
-      }
-      document.querySelectorAll(".slot").forEach(s => {
-        const r = s.getBoundingClientRect();
-        const over = touch.clientX > r.left && touch.clientX < r.right &&
-                     touch.clientY > r.top  && touch.clientY < r.bottom;
-        s.classList.toggle("drag-over", over);
-      });
+      moveDrag(touch.clientX, touch.clientY);
       return;
     }
 
-    // 위쪽으로 30px 이상 스와이프 → 즉시 드래그 모드 진입
-    if (dy < -30 && Math.abs(dx) < Math.abs(dy) && activeCard && !dragMode) {
-      clearTimeout(longPressTimer);
-      dragMode = true;
-      activeCard.classList.add("drag-ready");
-      if (navigator.vibrate) navigator.vibrate(30);
-
-      const r = activeCard.getBoundingClientRect();
-      dragClone = activeCard.cloneNode(true);
-      dragClone.style.cssText = `position:fixed;width:${r.width}px;height:${r.height}px;` +
-        `opacity:0.85;pointer-events:none;z-index:9999;border-radius:10px;` +
-        `left:${touch.clientX - r.width / 2}px;top:${touch.clientY - r.height / 2}px;transition:none;`;
-      document.body.appendChild(dragClone);
-      activeCard.classList.add("dragging");
-      albumDragId = activeCard.dataset.id;
+    /* 위로 10px 이상 스와이프 → 즉시 드래그 시작 */
+    if (activeCard && dy < -10 && Math.abs(dy) > Math.abs(dx)) {
       e.preventDefault();
+      startDrag(activeCard, touch.clientX, touch.clientY);
+      activeCard = null;
       return;
     }
 
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearTimeout(longPressTimer);
+    /* 옆으로 움직이면 activeCard 무효화 (좌우 스와이프로 처리) */
+    if (Math.abs(dx) > 10) {
+      activeCard = null;
+    }
   }, { passive: false });
 
+  /* ── TOUCHEND ── */
   tray.addEventListener("touchend", (e) => {
-    clearTimeout(longPressTimer);
-    e.preventDefault();
-
-    if (dragMode) {
-      const touch = e.changedTouches[0];
-      if (dragClone) { dragClone.remove(); dragClone = null; }
-      if (activeCard) activeCard.classList.remove("dragging", "drag-ready");
-      document.querySelectorAll(".slot").forEach(s => {
-        const r = s.getBoundingClientRect();
-        if (touch.clientX > r.left && touch.clientX < r.right &&
-            touch.clientY > r.top  && touch.clientY < r.bottom) {
-          s.classList.remove("drag-over");
-          if (albumDragId) albumCheckDrop(s, albumDragId);
-        } else {
-          s.classList.remove("drag-over");
-        }
-      });
-      albumDragId = null; activeCard = null; dragMode = false;
-      return;
-    }
-
     const touch = e.changedTouches[0];
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
-    const cards = Array.from(document.querySelectorAll("#photo-slider .photo-card"));
 
-    // 스와이프 → 캐러셀 이동 (원형)
-    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) slideToTray(traySlideIdx + 1);
-      else        slideToTray(traySlideIdx - 1);
-      activeCard = null; return;
+    /* 드래그 중이었으면 드롭 처리 */
+    if (isDragging) {
+      e.preventDefault();
+      endDrag(touch.clientX, touch.clientY);
+      return;
     }
 
-    // 탭 → 옆 카드면 그쪽으로 이동, 메인 카드면 인라인 확대/축소
+    /* 좌우 스와이프 → 캐러셀 이동 */
+    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) slideToTray(traySlideIdx + 1, 1);
+      else        slideToTray(traySlideIdx - 1, -1);
+      activeCard = null;
+      return;
+    }
+
+    /* 탭 → 옆 카드 이동 or 확대 */
     if (Math.abs(dx) < 14 && Math.abs(dy) < 14 && activeCard && !activeCard.classList.contains("placed")) {
       const pos = parseInt(activeCard.getAttribute("data-pos") ?? "0");
-      if      (pos === -1) { slideToTray(traySlideIdx - 1); }
-      else if (pos ===  1) { slideToTray(traySlideIdx + 1); }
-      else if (pos === -2) { slideToTray(traySlideIdx - 2); }
-      else if (pos ===  2) { slideToTray(traySlideIdx + 2); }
-      else {
-        // 메인 카드(pos=0) → 확대
-        openPhotoZoom(activeCard);
-      }
+      if      (pos === -1) slideToTray(traySlideIdx - 1, -1);
+      else if (pos ===  1) slideToTray(traySlideIdx + 1,  1);
+      else if (pos === -2) slideToTray(traySlideIdx - 2, -1);
+      else if (pos ===  2) slideToTray(traySlideIdx + 2,  1);
+      else openPhotoZoom(activeCard);
     }
     activeCard = null;
   }, { passive: false });
+
+  tray.addEventListener("touchcancel", () => {
+    cancelDrag();
+    activeCard = null;
+  }, { passive: true });
+
+  /* ── 마우스 기반 (데스크탑) ── */
+  let mouseCard = null;
+  tray.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    mouseCard = getCardAt(e.clientX, e.clientY);
+    startX = e.clientX; startY = e.clientY;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) { moveDrag(e.clientX, e.clientY); return; }
+    if (!mouseCard) return;
+    const dy = e.clientY - startY;
+    const dx = e.clientX - startX;
+    if (dy < -8 && Math.abs(dy) > Math.abs(dx)) {
+      startDrag(mouseCard, e.clientX, e.clientY);
+      mouseCard = null;
+    } else if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      mouseCard = null;
+    }
+  });
+
+  document.addEventListener("mouseup", (e) => {
+    if (isDragging) endDrag(e.clientX, e.clientY);
+    mouseCard = null;
+  });
 }
 
 function stopHint() {}
@@ -1491,10 +1657,13 @@ window.addEventListener("load", () => {
 
   initWrapper();
   attachTrayEvents();
+  initCardPointerDrag();
 
   document.addEventListener("wheel",     e => e.preventDefault(), { passive: false });
   document.addEventListener("touchmove", e => {
-    // 앨범 드래그 중에는 막지 않음 (dragClone 이동 허용)
+    // 사진 드래그 클론이 활성화된 경우 허용 (attachTrayEvents에서 처리)
+    if (document.getElementById("photo-drag-clone")) return;
+    // 앨범 트레이 내부도 허용 (touchmove passive:false로 직접 제어)
     if (e.target.closest("#album-photo-row") || e.target.closest("#album-section")) return;
     e.preventDefault();
   }, { passive: false });

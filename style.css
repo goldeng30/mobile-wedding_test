@@ -1153,7 +1153,7 @@ body {
 }
 
 .slot-hint {
-  font-size: 7px;
+  font-size: 9px;
   color: var(--text);
   text-align: center;
   line-height: 1.3;
@@ -1238,13 +1238,15 @@ body {
   display: flex;
   align-items: stretch;
   gap: 8px;
-  margin: 24px 10px 0;
+  margin: 12px 10px 0;
   padding: 8px;
-  height: 150px;
+  height: 22dvh;
+  min-height: 130px;
+  max-height: 215px;
   border: 1.5px solid var(--rose);
   border-radius: 14px;
   background: rgba(255,245,245,0.6);
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* 캐릭터 영역 */
@@ -1483,7 +1485,7 @@ body {
   pointer-events: auto;
 }
 
-.photo-card.dragging { opacity: 0.3 !important; }
+.photo-card.dragging { opacity: 0.15 !important; }
 .photo-card.placed { opacity: 0.22 !important; pointer-events: none; filter: grayscale(1); }
 .photo-card.drag-ready {
   box-shadow: 0 6px 20px rgba(180,80,80,0.45);
@@ -1682,7 +1684,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 800;
-  pointer-events: auto;
+  pointer-events: none;
   opacity: 0;
   transition: opacity 0.5s ease;
 }
@@ -1972,4 +1974,126 @@ body {
   font-weight: 400;
   color: rgba(255,240,240,0.92);
   letter-spacing: 0.08em;
+}
+
+/* ══════════════════════════════════════════
+   앨범 완성 — fall 대량 낙하
+══════════════════════════════════════════ */
+
+/* 슬롯 완성 후 은은한 글로우 */
+.slot.correct.all-done {
+  animation: slotShineLoop 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes slotShineLoop {
+  0%   { box-shadow: 0 0 0 2px var(--rose-dark), 0 0 6px 2px rgba(255,255,255,0.35), 0 4px 14px rgba(180,80,80,0.22); }
+  100% { box-shadow: 0 0 0 2px var(--rose-dark), 0 0 18px 6px rgba(255,255,255,0.72), 0 4px 18px rgba(180,80,80,0.22); }
+}
+
+.slot.correct.all-done:nth-child(1) { animation-delay: 0.00s; }
+.slot.correct.all-done:nth-child(2) { animation-delay: 0.18s; }
+.slot.correct.all-done:nth-child(3) { animation-delay: 0.36s; }
+.slot.correct.all-done:nth-child(4) { animation-delay: 0.54s; }
+.slot.correct.all-done:nth-child(5) { animation-delay: 0.72s; }
+.slot.correct.all-done:nth-child(6) { animation-delay: 0.90s; }
+
+/* ══════════════════════════════════════════
+   댄스 영역 (완성 후 트레이 교체)
+══════════════════════════════════════════ */
+
+#dance-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  padding: 4px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 음표 컨테이너 */
+#dance-notes-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dance-note {
+  position: absolute;
+  font-size: 14px;
+  animation: noteFloat 1.6s ease-in-out infinite alternate, danceColor 3s linear infinite;
+  animation-delay:
+    calc(var(--ni) * 0.28s),
+    calc(var(--ni) * 0.42s);
+  opacity: 0.9;
+}
+
+.dance-note:nth-child(1) { left: 3%;  top: 15%; }
+.dance-note:nth-child(2) { left: 22%; top: 8%;  }
+.dance-note:nth-child(3) { right: 3%; top: 15%; }
+.dance-note:nth-child(4) { left: 6%;  bottom: 20%; }
+.dance-note:nth-child(5) { right: 6%; bottom: 20%; }
+.dance-note:nth-child(6) { right: 22%;top: 8%;  }
+
+@keyframes noteFloat {
+  0%   { transform: translateY(0px)  rotate(-8deg) scale(1); }
+  40%  { transform: translateY(-5px) rotate(4deg)  scale(1.1); }
+  100% { transform: translateY(-9px) rotate(-3deg) scale(1.12); }
+}
+
+/* gif — 탭 높이에서 텍스트 공간 빼고 나머지를 꽉 채움 */
+#dance-gif {
+  width: auto;
+  height: calc(100% - 28px);
+  max-height: 182px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 1;
+  position: relative;
+  z-index: 2;
+}
+
+#dance-label {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.dance-space {
+  display: inline-block;
+  width: 6px;
+}
+
+.dance-char {
+  display: inline-block;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  animation:
+    danceJump  0.7s ease-in-out infinite alternate,
+    danceColor 2.8s linear infinite;
+  animation-delay:
+    calc(var(--i) * 0.12s),
+    calc(var(--i) * 0.38s);
+}
+
+@keyframes danceJump {
+  0%   { transform: translateY(0px)  rotate(-4deg) scale(1); }
+  30%  { transform: translateY(-5px) rotate(3deg)  scale(1.08); }
+  60%  { transform: translateY(-9px) rotate(-2deg) scale(1.12); }
+  100% { transform: translateY(-4px) rotate(5deg)  scale(1.06); }
+}
+
+@keyframes danceColor {
+  0%   { color: var(--rose-dark); }
+  20%  { color: #c97b9a; }
+  40%  { color: #9b7ec8; }
+  60%  { color: #7aacca; }
+  80%  { color: #ca8a7a; }
+  100% { color: var(--rose-dark); }
 }
